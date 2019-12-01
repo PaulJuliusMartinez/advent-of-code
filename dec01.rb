@@ -1,4 +1,4 @@
-#! /usr/bin/ruby
+#! /usr/bin/env ruby
 
 masses = File.readlines('dec01.input').map(&:to_i)
 
