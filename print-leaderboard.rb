@@ -45,7 +45,10 @@ processed_members.each do |member|
   end
 end
 
-sorted_members = processed_members.sort_by {|m| [-(m[:score] || 0), m[:name]]}
+max_t = Time.now.to_i
+sorted_members = processed_members.sort_by do |m|
+  [-(m[:score] || 0), m[:second_star_ts] || max_t, m[:first_star_ts] || max_t, m[:name]]
+end
 
 day_start_time = Time.new(2019, 11, 30, 21, 0, 0) + ((day - 1) * 24 * 3600)
 start_ts = day_start_time.to_i
