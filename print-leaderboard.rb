@@ -3,6 +3,7 @@
 require 'json'
 
 LEADERBOARD_DATA_FILE = 'leaderboard.json'
+# Has the content "session=<base64>"
 COOKIE_FILE = 'cookie'
 MAX_FETCH_FREQUENCY = 15 * 60
 
@@ -23,7 +24,7 @@ end
 
 if should_fetch_again
   json = `
-    curl 'https://adventofcode.com/2019/leaderboard/private/view/632609.json' \
+    curl --silent 'https://adventofcode.com/2019/leaderboard/private/view/632609.json' \
     -H 'cache-control: max-age=0' \
     -H 'cookie: #{File.read(COOKIE_FILE).strip}'
   `
