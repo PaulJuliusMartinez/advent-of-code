@@ -50,7 +50,7 @@ while my_path_to_com.first == santa_path_to_com.first
   santa_path_to_com.shift
 end
 
-puts my_path_to_com.length + santa_path_to_com.length + 1
+puts my_path_to_com.length + santa_path_to_com.length
 
 
 __END__
