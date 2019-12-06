@@ -1,6 +1,12 @@
 #! /usr/bin/env ruby
 
-strs = DATA.readlines.map(&:strip)
+# Run ./decXX.rb <test_name> to run code on input in file decXX.<test_name>.
+strs =
+  if ARGV[0]
+    test_filename = File.readlines("#{__FILE__.chomp('rb')}#{ARGV[0]}").map(&:strip)
+  else
+    DATA.readlines.map(&:strip)
+  end
 ints = strs.map(&:to_i)
 
 puts strs

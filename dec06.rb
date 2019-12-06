@@ -1,6 +1,11 @@
 #! /usr/bin/env ruby
 
-strs = DATA.readlines.map(&:strip)
+strs =
+  if ARGV[0]
+    test_filename = File.readlines("#{__FILE__.chomp('rb')}#{ARGV[0]}").map(&:strip)
+  else
+    DATA.readlines.map(&:strip)
+  end
 
 satellites = {}
 centers = {}
