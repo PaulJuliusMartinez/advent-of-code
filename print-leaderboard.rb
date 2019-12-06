@@ -2,13 +2,38 @@
 
 require 'json'
 
-json = `
-  curl 'https://adventofcode.com/2019/leaderboard/private/view/632609.json' \
-  -H 'cache-control: max-age=0' \
-  -H 'cookie: #{File.read('cookie').strip}'
-`
+LEADERBOARD_DATA_FILE = 'leaderboard.json'
+COOKIE_FILE = 'cookie'
+MAX_FETCH_FREQUENCY = 15 * 60
 
-members = JSON.parse(json, symbolize_names: true)[:members].values
+existing_data = File.read(LEADERBOARD_DATA_FILE).strip
+should_fetch_again = true
+
+if !existing_data.empty?
+  parsed = JSON.parse(existing_data, symbolize_names: true)
+  last_fetched_at = parsed[:last_fetched_at]
+
+  if Time.now.to_i - last_fetched_at > MAX_FETCH_FREQUENCY
+    should_fetch_again = true
+  else
+    puts "Using data from #{Time.at(last_fetched_at)}"
+    should_fetch_again = false
+  end
+end
+
+if should_fetch_again
+  json = `
+    curl 'https://adventofcode.com/2019/leaderboard/private/view/632609.json' \
+    -H 'cache-control: max-age=0' \
+    -H 'cookie: #{File.read(COOKIE_FILE).strip}'
+  `
+
+  parsed = JSON.parse(json, symbolize_names: true)
+
+  File.write(LEADERBOARD_DATA_FILE, parsed.merge(last_fetched_at: Time.now.to_i).to_json)
+end
+
+members = parsed[:members].values
 
 latest_day = members.map do |member|
   member[:completion_day_level].keys.map(&:to_s).map(&:to_i).max
