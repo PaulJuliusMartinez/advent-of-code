@@ -2,7 +2,13 @@
 
 require 'json'
 
-members = JSON.parse(DATA.readlines[0], symbolize_names: true)[:members].values
+json = `
+  curl 'https://adventofcode.com/2019/leaderboard/private/view/632609.json' \
+  -H 'cache-control: max-age=0' \
+  -H 'cookie: #{File.read('cookie').strip}'
+`
+
+members = JSON.parse(json, symbolize_names: true)[:members].values
 
 latest_day = members.map do |member|
   member[:completion_day_level].keys.map(&:to_s).map(&:to_i).max
@@ -91,5 +97,3 @@ sorted_members.each do |m|
       total_score.to_s.rjust(5),
   )
 end
-
-__END__
