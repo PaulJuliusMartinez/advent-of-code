@@ -31,6 +31,68 @@ OPCODE_TO_NUM_PARAMS = {
   8 => 3, # Equals
 }
 
+def run_intcode(arr, inputs)
+  ip = 0
+  loop do
+    op = arr[ip]
+
+    opcode = op % 100
+    mode1 = (op / 100) % 10
+    mode2 = (op / 1000) % 10
+
+    break if opcode == 99
+
+    param1 = arr[ip + 1]
+    param2 = arr[ip + 2]
+    param3 = arr[ip + 3]
+
+    value1 = value_for_param(arr, param1, mode1)
+    value2 = value_for_param(arr, param2, mode2)
+
+    ip += 1 + OPCODE_TO_NUM_PARAMS[opcode]
+
+    if opcode == 1
+      arr[param3] = value1 + value2
+    elsif opcode == 2
+      arr[param3] = value1 * value2
+    elsif opcode == 3
+      arr[param1] = inputs.shift
+    elsif opcode == 4
+      return value1
+    elsif opcode == 5
+      ip = value2 if value1 != 0
+    elsif opcode == 6
+      ip = value2 if value1 == 0
+    elsif opcode == 7
+      arr[param3] = value1 < value2 ? 1 : 0
+    elsif opcode == 8
+      arr[param3] = value1 == value2 ? 1 : 0
+    end
+  end
+end
+
+# Part 1
+#puts "Part 1"
+#run_intcode(orig_ints.dup, [1])
+
+def orders(prefix, rest)
+  return [prefix] if rest.empty?
+  rest.flat_map do |a|
+    orders(prefix + [a], rest - [a])
+  end
+end
+
+outputs = orders([], [0, 1, 2, 3, 4]).map do |order|
+  input = 0
+  order.each do |phase|
+    input = run_intcode(orig_ints.dup, [phase, input])
+  end
+  input
+end
+
+puts "Part 1"
+puts outputs.max
+
 class Intcode
   attr_accessor :next_input
   attr_reader :id
@@ -86,10 +148,6 @@ class Intcode
   end
 end
 
-# Part 1
-#puts "Part 1"
-#run_intcode(orig_ints.dup, [1])
-
 def orders(prefix, rest)
   return [prefix] if rest.empty?
   rest.flat_map do |a|
@@ -98,7 +156,7 @@ def orders(prefix, rest)
 end
 
 outputs = orders([], [5, 6, 7, 8, 9]).map do |order|
-  puts order.inspect
+  # puts order.inspect
   cpu1 = Intcode.new(orig_ints.dup, 'A')
   cpu2 = Intcode.new(orig_ints.dup, 'B')
   cpu3 = Intcode.new(orig_ints.dup, 'C')
@@ -109,7 +167,7 @@ outputs = orders([], [5, 6, 7, 8, 9]).map do |order|
 
   cpus.zip(order).each do |cpu, phase|
     res1 = cpu.run
-    puts "Sent phase to #{cpu.id}"
+    # puts "Sent phase to #{cpu.id}"
     cpu.send_input(res1, phase)
   end
 
@@ -126,13 +184,13 @@ outputs = orders([], [5, 6, 7, 8, 9]).map do |order|
       end
 
       fail if res[:state] != :input
-      puts "Sending input to #{cpu.id}"
+      # puts "Sending input to #{cpu.id}"
       cpu.send_input(res, last_output)
 
       res = cpu.run
       fail if res[:state] != :output
 
-      puts "Got output from #{cpu.id}"
+      # puts "Got output from #{cpu.id}"
       last_output = res[:value]
       last_e_output = res[:value] if cpu == cpu5
     end
@@ -141,6 +199,7 @@ outputs = orders([], [5, 6, 7, 8, 9]).map do |order|
   last_e_output
 end
 
+puts "Part 2"
 puts outputs.max
 
 __END__
