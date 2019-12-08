@@ -1,17 +1,18 @@
 #! /usr/bin/env ruby
 
-# Run ./decXX.rb <test_name> to run code on input in file decXX.<test_name>.
-strs =
-  if ARGV[0]
-    test_filename = File.readlines("#{__FILE__.chomp('rb')}#{ARGV[0]}").map(&:strip)
-  else
-    DATA.readlines.map(&:strip)
-  end
-ints = strs.map(&:to_i)
+require './intcode.rb'
+require './input.rb'
 
-puts strs
-puts ints
+strs = get_input_str_arr(__FILE__)
+str = get_input_str(__FILE__)
+ints1 = get_single_line_input_int_arr(__FILE__)
+ints2 = get_multi_line_input_int_arr(__FILE__)
+
+puts strs.inspect
+puts str.inspect
+puts ints1.inspect
+puts ints2.inspect
 
 __END__
-hello
+hello,2,3
 1234
