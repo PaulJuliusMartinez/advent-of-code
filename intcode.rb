@@ -61,12 +61,15 @@ class Intcode
       @ip += 1 + OPCODE_TO_NUM_PARAMS[opcode]
 
       if opcode == 1
-        @mem[param3 + (mode3 == RELATIVE_MODE ? @relative_base : 0)] = value1 + value2
+        val = value1 + value2
+        store(param3, mode3, val)
       elsif opcode == 2
-        @mem[param3 + (mode3 == RELATIVE_MODE ? @relative_base : 0)] = value1 * value2
+        val = value1 * value2
+        store(param3, mode3, val)
       elsif opcode == 3
         if inputs.any?
-          @mem[param1 + (mode1 == RELATIVE_MODE ? @relative_base : 0)] = inputs.shift
+          val = inputs.shift
+          store(param1, mode1, val)
         else
           # Rewind ip, so we can just call .run again.
           @ip -= 1 + OPCODE_TO_NUM_PARAMS[opcode]
@@ -79,12 +82,24 @@ class Intcode
       elsif opcode == 6
         @ip = value2 if value1 == 0
       elsif opcode == 7
-        @mem[param3 + (mode3 == RELATIVE_MODE ? @relative_base : 0)] = value1 < value2 ? 1 : 0
+        val = value1 < value2 ? 1 : 0
+        store(param3, mode3, val)
       elsif opcode == 8
-        @mem[param3 + (mode3 == RELATIVE_MODE ? @relative_base : 0)] = value1 == value2 ? 1 : 0
+        val = value1 == value2 ? 1 : 0
+        store(param3, mode3, val)
       elsif opcode == 9
         @relative_base += value1
       end
+    end
+  end
+
+  def store(param, mode, value)
+    if mode == POSITION_MODE
+      @mem[param] = value
+    elsif mode == IMMEDIATE_MODE
+      fail 'Trying to store to location using immediate mode'
+    elsif mode == RELATIVE_MODE
+      @mem[param + @relative_base] = value
     end
   end
 
