@@ -112,4 +112,8 @@ class Intcode
       @mem[param + @relative_base]
     end
   end
+
+  def value_at_addr(addr)
+    @mem[addr]
+  end
 end
