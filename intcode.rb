@@ -10,10 +10,12 @@ class Intcode
     6 => 2, # Jump-if-false
     7 => 3, # Less than
     8 => 3, # Equals
+    9 => 1, # Update relative base
   }
 
   POSITION_MODE = 0
   IMMEDIATE_MODE = 1
+  RELATIVE_MODE = 2
 
   DONE = :done
   AWAITING_INPUT = :input
@@ -22,8 +24,11 @@ class Intcode
   attr_reader :id
 
   def initialize(mem, id = nil)
-    @mem = mem.dup
+    @mem = Hash.new {|h, k| h[k] = 0}
+    mem.each.with_index {|v, i| @mem[i] = v}
+
     @ip = 0
+    @relative_base = 0
 
     @id = id || ($INTCODE_ID += 1)
     @halted = false
@@ -56,12 +61,12 @@ class Intcode
       @ip += 1 + OPCODE_TO_NUM_PARAMS[opcode]
 
       if opcode == 1
-        @mem[param3] = value1 + value2
+        @mem[param3 + (mode3 == RELATIVE_MODE ? @relative_base : 0)] = value1 + value2
       elsif opcode == 2
-        @mem[param3] = value1 * value2
+        @mem[param3 + (mode3 == RELATIVE_MODE ? @relative_base : 0)] = value1 * value2
       elsif opcode == 3
         if inputs.any?
-          @mem[param1] = inputs.shift
+          @mem[param1 + (mode1 == RELATIVE_MODE ? @relative_base : 0)] = inputs.shift
         else
           # Rewind ip, so we can just call .run again.
           @ip -= 1 + OPCODE_TO_NUM_PARAMS[opcode]
@@ -74,9 +79,11 @@ class Intcode
       elsif opcode == 6
         @ip = value2 if value1 == 0
       elsif opcode == 7
-        @mem[param3] = value1 < value2 ? 1 : 0
+        @mem[param3 + (mode3 == RELATIVE_MODE ? @relative_base : 0)] = value1 < value2 ? 1 : 0
       elsif opcode == 8
-        @mem[param3] = value1 == value2 ? 1 : 0
+        @mem[param3 + (mode3 == RELATIVE_MODE ? @relative_base : 0)] = value1 == value2 ? 1 : 0
+      elsif opcode == 9
+        @relative_base += value1
       end
     end
   end
@@ -86,6 +93,8 @@ class Intcode
       @mem[param]
     elsif mode == IMMEDIATE_MODE
       param
+    elsif mode == RELATIVE_MODE
+      @mem[param + @relative_base]
     end
   end
 end
