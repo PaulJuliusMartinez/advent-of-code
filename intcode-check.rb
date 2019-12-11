@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 
+require 'set'
 require './intcode.rb'
 
 def memory(filename)
@@ -15,6 +16,7 @@ day7_ex3_mem = memory('intcode.day7.ex3')
 day7_ex4_mem = memory('intcode.day7.ex4')
 day7_ex5_mem = memory('intcode.day7.ex5')
 day9_mem = memory('intcode.day9')
+day11_mem = memory('intcode.day11')
 
 def check(day, expected, actual)
   if expected == actual
@@ -140,5 +142,40 @@ check('Day 7 Part 2', day7_part2(day7_mem), 1518124)
 
 check('Day 9 Part 1', Intcode.new(day9_mem).run([1])[:value], 3533056970)
 check('Day 9 Part 2', Intcode.new(day9_mem).run([2])[:value], 72852)
+
+##########
+# DAY 11 #
+##########
+
+cpu = Intcode.new(day11_mem)
+curr_dir = [0, 1]
+
+curr_x, curr_y = [0, 0]
+panels = Hash.new {|h, k| h[k] = 'b'}
+
+painted = Set.new
+
+loop do
+  output1 = cpu.run([panels[[curr_x, curr_y]] == 'b' ? 0 : 1])
+  break if output1[:state] == Intcode::DONE
+  val1 = output1[:value]
+  val2 = cpu.run[:value]
+
+  painted.add([curr_x, curr_y])
+  panels[[curr_x, curr_y]] = val1 == 0 ? 'b' : 'w'
+
+  if val2 == 0
+    # turn left
+    curr_dir = [-curr_dir[1], curr_dir[0]]
+  else
+    # turn right
+    curr_dir = [curr_dir[1], -curr_dir[0]]
+  end
+
+  curr_x += curr_dir[0]
+  curr_y += curr_dir[1]
+end
+
+check('Day 11 Part 1', painted.count, 2238)
 
 puts 'All good!'
