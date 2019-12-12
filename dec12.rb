@@ -19,32 +19,23 @@ $primes = [2, 3, 5, 7, 11, 13, 17, 19]
   $primes << n if is_prime
 end
 
-positions = strs.map do |str|
+original_positions = strs.map do |str|
   parts = str.split(',')
   ps = parts.map do |part|
     part.split('=')[1].to_i
   end
 
-  ps[1] = 0
-  ps[2] = 0
-
   ps
 end
 
-velocities = [
+original_velocities = [
   [0, 0, 0],
   [0, 0, 0],
   [0, 0, 0],
   [0, 0, 0],
 ]
 
-index = 0
-
-
-previous_positions = Set.new
-
-loop do
-  # update velocities
+def iterate(positions, velocities)
   velocities = velocities.each.with_index.map do |v, vi|
     dx, dy, dz = [0, 0, 0]
     positions.each.with_index.map do |p, pi|
@@ -80,26 +71,57 @@ loop do
     ]
   end
 
-
-  index += 1
-
-  break if previous_positions.include?([positions, velocities])
-
-  previous_positions.add([positions, velocities])
+  [positions, velocities]
 end
 
-puts index - 1
-# puts "#{positions[0].inspect} #{velocities[0].inspect}"
-# puts "#{positions[1].inspect} #{velocities[1].inspect}"
-# puts "#{positions[2].inspect} #{velocities[2].inspect}"
-# puts "#{positions[3].inspect} #{velocities[3].inspect}"
+# Part 1
+
+index = 0
+positions = original_positions.map(&:dup)
+velocities = original_velocities.map(&:dup)
+
+
+loop do
+  positions, velocities = iterate(positions, velocities)
+  index += 1
+  break if index > 1000 - 1
+end
 
 total_energy = positions.zip(velocities).map do |p, v|
   p.map(&:abs).sum * v.map(&:abs).sum
 end
   .sum
 
-# puts total_energy
+puts total_energy
+
+# Part 2
+
+def count_cycle_length(positions, velocities, dim)
+  positions = positions.map(&:dup)
+  velocities = velocities.map(&:dup)
+
+  positions.each do |pos|
+    pos[0] = 0 if dim != 0
+    pos[1] = 0 if dim != 1
+    pos[2] = 0 if dim != 2
+  end
+
+  previous_positions = Set.new
+  index = 0
+
+  loop do
+    positions, velocities = iterate(positions, velocities)
+    index += 1
+    break if previous_positions.include?([positions, velocities])
+    previous_positions.add([positions, velocities])
+  end
+
+  index - 1
+end
+
+cycle_x = count_cycle_length(original_positions, original_velocities, 0)
+cycle_y = count_cycle_length(original_positions, original_velocities, 1)
+cycle_z = count_cycle_length(original_positions, original_velocities, 2)
 
 def factor(n)
   factors = []
@@ -120,9 +142,24 @@ def factor(n)
   factors
 end
 
-puts factor(268296).inspect
-puts factor(193052).inspect
-puts factor(102356).inspect
+def lcm(factor_arrs)
+  lcm = 1
+
+  while factor_arrs.any?
+    factors = factor_arrs.pop
+    factors.each do |factor|
+      lcm *= factor
+
+      factor_arrs.each do |factor_arr|
+        factor_arr.shift if factor_arr[0] == factor
+      end
+    end
+  end
+
+  lcm
+end
+
+puts lcm([factor(cycle_x), factor(cycle_y), factor(cycle_z)])
 
 __END__
 <x=19, y=-10, z=7>
