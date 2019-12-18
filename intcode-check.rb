@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby
 
 require 'set'
-require './intcode.rb'
+require './intcode-v3.rb'
 
 def memory(filename)
    File.readlines(filename).map(&:strip)[0].split(',').map(&:to_i)
@@ -17,12 +17,13 @@ day7_ex4_mem = memory('intcode.day7.ex4')
 day7_ex5_mem = memory('intcode.day7.ex5')
 day9_mem = memory('intcode.day9')
 day11_mem = memory('intcode.day11')
+day13_mem = memory('intcode.day13')
 
 def check(day, expected, actual)
   if expected == actual
     puts "#{day.ljust(20)} Correct"
   else
-    fail "#{day.ljust(20)} failed"
+    fail "#{day.ljust(20)} Failed (Expected #{expected}, but got #{actual}"
   end
 end
 
@@ -61,11 +62,8 @@ check('Day 2 Part 2', day2_part2, 6718)
 
 def day5(mem, inputs)
   day5_part1 = Intcode.new(mem)
-  output = day5_part1.run(inputs)[:value]
-  while output == 0
-    output = day5_part1.run[:value]
-  end
-  output
+  day5_part1.run(inputs)
+  day5_part1.all_output.last
 end
 
 check('Day 5 Part 1', day5(day5_mem, [1]), 9961446)
@@ -80,8 +78,9 @@ def day7_part1(mem)
   outputs = [0, 1, 2, 3, 4].permutation.map do |order|
     input = 0
     order.each do |phase|
-      output = Intcode.new(mem).run([phase, input])
-      input = output[:value]
+      cpu = Intcode.new(mem)
+      cpu.run([phase, input])
+      input = cpu.next_output
     end
     input
   end
@@ -105,7 +104,7 @@ def day7_part2(mem)
     cpus = [cpu1, cpu2, cpu3, cpu4, cpu5]
 
     cpus.zip(order).each do |cpu, phase|
-      cpu.run([phase])
+      cpu.queue_input(phase)
     end
 
     last_output = 0
@@ -114,15 +113,16 @@ def day7_part2(mem)
 
     while !break_all do
       cpus.each do |cpu|
-        state = cpu.run([last_output])
-
-        if state[:state] == Intcode::DONE
+        if cpu.halted?
           break_all = true
           break
         end
 
-        last_output = state[:value]
-        last_e_output = state[:value] if cpu == cpu5
+        cpu.queue_input(last_output)
+        cpu.run
+
+        last_output = cpu.next_output
+        last_e_output = last_output if cpu == cpu5
       end
     end
 
@@ -140,8 +140,8 @@ check('Day 7 Part 2', day7_part2(day7_mem), 1518124)
 # DAY 9 #
 #########
 
-check('Day 9 Part 1', Intcode.new(day9_mem).run([1])[:value], 3533056970)
-check('Day 9 Part 2', Intcode.new(day9_mem).run([2])[:value], 72852)
+check('Day 9 Part 1', Intcode.new(day9_mem).run([1], return_output: true)[:value], 3533056970)
+check('Day 9 Part 2', Intcode.new(day9_mem).run([2], return_output: true)[:value], 72852)
 
 ##########
 # DAY 11 #
@@ -156,10 +156,11 @@ panels = Hash.new {|h, k| h[k] = 'b'}
 painted = Set.new
 
 loop do
-  output1 = cpu.run([panels[[curr_x, curr_y]] == 'b' ? 0 : 1])
-  break if output1[:state] == Intcode::DONE
-  val1 = output1[:value]
-  val2 = cpu.run[:value]
+  break if cpu.halted?
+  cpu.queue_input(panels[[curr_x, curr_y]] == 'b' ? 0 : 1)
+  cpu.run
+
+  val1, val2 = cpu.all_output
 
   painted.add([curr_x, curr_y])
   panels[[curr_x, curr_y]] = val1 == 0 ? 'b' : 'w'
@@ -177,5 +178,56 @@ loop do
 end
 
 check('Day 11 Part 1', painted.count, 2238)
+
+##########
+# DAY 13 #
+##########
+
+def day13_part1(mem)
+  cpu = Intcode.new(mem)
+  cpu.run
+
+  cpu.all_output.each_slice(3).count {|_x, _y, tile_id| tile_id == 2}
+end
+
+def day13_part2(mem)
+  mem[0] = 2
+  cpu = Intcode.new(mem)
+
+  last_score = 0
+  last_ball_x = nil
+  last_paddle_x = nil
+
+  loop do
+    break if cpu.halted?
+
+    cpu.run
+
+    cpu.all_output.each_slice(3) do |x, y, tile_id|
+      if [x, y] == [-1, 0]
+        last_score = tile_id
+      else
+        if tile_id == 3
+          last_paddle_x = x
+        elsif tile_id == 4
+          last_ball_x = x
+        end
+      end
+    end
+
+    if last_paddle_x < last_ball_x
+      cpu.queue_input(1)
+    elsif last_paddle_x > last_ball_x
+      cpu.queue_input(-1)
+    else
+      cpu.queue_input(0)
+    end
+  end
+
+  last_score
+end
+
+check('Day 13 Part 1', day13_part1(day13_mem), 270)
+check('Day 13 Part 2', day13_part2(day13_mem), 12535)
 
 puts 'All good!'
