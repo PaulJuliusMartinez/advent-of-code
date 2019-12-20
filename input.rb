@@ -1,4 +1,4 @@
-$DATA_STRS = DATA.readlines.map(&:strip)
+$DATA_STRS = DATA.readlines.map {|str| str[0..-2]}
 
 # Run ./decXX.rb <test_name> to run code on input in file decXX.<test_name>.
 #
@@ -8,7 +8,7 @@ $DATA_STRS = DATA.readlines.map(&:strip)
 # c
 def get_input_str_arr(original_filename)
   if ARGV[0]
-    File.readlines("#{original_filename.chomp('rb')}#{ARGV[0]}").map(&:strip)
+    File.readlines("#{original_filename.chomp('rb')}#{ARGV[0]}").map {|str| str[0..-2]}
   else
     $DATA_STRS
   end
