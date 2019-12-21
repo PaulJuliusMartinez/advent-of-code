@@ -24,6 +24,44 @@ cpu.run
 puts cpu.all_output[-1]
 
 # ((E | H) & (~C & D)) | ~(B | E) | ~A
+#
+# If A is a hole, jump.
+# If B and E are holes, jump.
+#   Because if not you'd have to jump next turn, but then you'd fall
+#   into the hole at E.
+# If C is a hole, and D is ground, jump early, unless there are holes
+# at E and H.
+#   If there are holes at E and H, then as soon as we landed on D,
+#   we'd have to jump again, but then we'd land in the hole at H.
+#
+#   Let's consider how jumping early could be the wrong choice:
+#
+#   If jumping next turn is the correct choice, then that means that
+#   E is not a hole. But if we jump now, we could then choose to not
+#   jump, and then make the another jump at E if we needed to, so
+#   it's not a problem to jump early if we could jump next turn.
+#
+#   If jumping in two turns is the only possible right choice, then
+#   F is ground and E is a hole (because otherwise once we landed we
+#   could walk to F). Since we're still considering jumping, H must
+#   not be a hole, so we have:
+#
+#   ##.#.#?#?
+#   ABCDEFGHI
+#
+#   Jumping twice would put us at H, and jumping in two turns would
+#   put us at F. If jumping in two turns is the only possible right
+#   choice, then it's because of something we can't see.
+#
+#
+#   Indeed, consider a path of alternating holes and ground, with one
+#   ground randomly missing farther on:
+#
+#   ######.#.#.#.#.#.#.#.#.#.#.#...#.#.#.#.######
+#
+#   There's a correct place to start jumping here, and a wrong place,
+#   but picking the correct one could require an arbitrary amount of
+#   lookahead.
 part2_instructions = <<~INST
   OR E J
   OR H J
