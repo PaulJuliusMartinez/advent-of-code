@@ -14,7 +14,15 @@ end
 
 queues = 50.times.map {[]}
 
+nat_packet = nil
+
+last_sent_by_nat = nil
+
+iters = 0
 loop do
+  all_empty = queues.all?(&:empty?)
+  none_sent = true
+
   cpus.each.with_index do |cpu, index|
     while queues[index].any?
       cpu.queue_input(queues[index].shift)
@@ -28,14 +36,25 @@ loop do
     output = cpu.all_output
     output.each_slice(3) do |addr, x, y|
       if addr == 255
-        puts "CPU #{index} sent (#{x}, #{y}) to #{addr}"
-        break
+        nat_packet = [x, y]
       else
         queues[addr] << x
         queues[addr] << y
+        none_sent = false
       end
     end
   end
+
+  if all_empty && none_sent && iters > 0
+    if nat_packet[1] == last_sent_by_nat
+      puts nat_packet[1]
+      break
+    end
+    last_sent_by_nat = nat_packet[1]
+    queues[0] = nat_packet
+  end
+
+  iters += 1
 end
 
 __END__
