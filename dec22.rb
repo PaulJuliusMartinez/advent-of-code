@@ -102,6 +102,11 @@ remainder = SHUFFLE_TIMES
 pwr_of_2 = 2
 index = END_INDEX
 sindex = 64586600795606
+
+in2020 = get_next_index(2020, ia, ib)
+puts in2020
+puts get_next_index(in2020, a, b)
+
 while remainder > 0
   if remainder % pwr_of_2 > 0
     sindex = get_next_index(sindex, a, b)
