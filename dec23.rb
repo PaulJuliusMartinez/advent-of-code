@@ -13,6 +13,7 @@ cpus = 50.times.map do |n|
 end
 
 queues = 50.times.map {[]}
+putsed_first_nat_y = false
 
 nat_packet = nil
 
@@ -37,6 +38,8 @@ loop do
     output.each_slice(3) do |addr, x, y|
       if addr == 255
         nat_packet = [x, y]
+        puts y if !putsed_first_nat_y
+        putsed_first_nat_y = true
       else
         queues[addr] << x
         queues[addr] << y
