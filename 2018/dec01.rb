@@ -10,6 +10,8 @@ require 'prime'
 
 deltas = get_multi_line_input_int_arr(__FILE__)
 
+puts "Part 1: #{deltas.sum}"
+
 frequencies = Set.new
 frequencies << 0
 
@@ -18,7 +20,7 @@ loop do
   deltas.each do |delta|
     sum += delta
     if frequencies.include?(sum)
-      puts sum
+      puts "Part 2: #{sum}"
       exit(0)
     end
     frequencies << sum
