@@ -2,6 +2,9 @@
 
 require './input.rb'
 
+require 'set'
+require 'prime'
+
 strs = get_input_str_arr(__FILE__)
 puts strs.inspect
 

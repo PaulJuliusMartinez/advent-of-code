@@ -2,13 +2,25 @@
 
 require './input.rb'
 
-strs = get_input_str_arr(__FILE__)
-puts strs.inspect
+require 'set'
+require 'prime'
 
-str = get_input_str(__FILE__)
-puts str.inspect
+# Part 1: 1:28 (~94)
+# Part 2: 5:21 (~95)
 
-ints2 = get_multi_line_input_int_arr(__FILE__)
-puts ints2.inspect
+deltas = get_multi_line_input_int_arr(__FILE__)
 
-ints = get_single_line_input_int_arr(__FILE__, separator: ',')
+frequencies = Set.new
+frequencies << 0
+
+sum = 0
+loop do
+  deltas.each do |delta|
+    sum += delta
+    if frequencies.include?(sum)
+      puts sum
+      exit(0)
+    end
+    frequencies << sum
+  end
+end
