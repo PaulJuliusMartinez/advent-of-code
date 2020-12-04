@@ -6,18 +6,7 @@ require 'set'
 require 'prime'
 require 'scanf'
 
-strs = get_input_str_arr(__FILE__)
-
-$map = {}
-
-strs.each.with_index do |str, y|
-  str.chars.each.with_index do |ch, x|
-    $map[[x, y]] = ch
-  end
-end
-
-WIDTH = strs[0].length
-HEIGHT = strs.length
+$map, HEIGHT, WIDTH = get_grid_input(__FILE__)
 
 def count_for_slope(dx, dy)
   x, y = [dx, dy]

@@ -75,3 +75,22 @@ end
 def get_multi_line_input_int_arr(original_filename)
   get_input_str_arr(original_filename).map(&:to_i)
 end
+
+# For grid inputs like:
+# .3..###..
+# ...1# ..#
+# ..#  ...#
+# 5...8..#.
+def get_grid_input(original_filename)
+  strs = get_input_str_arr(original_filename)
+
+  map = {}
+
+  strs.each.with_index do |str, y|
+    str.chars.each.with_index do |ch, x|
+      map[[x, y]] = ch
+    end
+  end
+
+  [map, strs.length, strs[0].length]
+end
