@@ -7,45 +7,32 @@ require 'set'
 require 'prime'
 require 'scanf'
 
-strs = get_input_str_arr(__FILE__)
+grouped_strs = str_groups_separated_by_blank_lines(__FILE__)
 
 total_count = 0
-seen = Set.new
 
-strs.each do |str|
-  if str == ''
-    total_count += seen.count
-    seen = Set.new
-    next
+grouped_strs.each do |group|
+  seen = Set.new
+  group.each do |str|
+    str.chars.each do |ch|
+      seen << ch
+    end
   end
-
-  str.chars.each do |ch|
-    seen << ch
-  end
+  total_count += seen.count
 end
-
-total_count += seen.count
 
 puts "Part 1: #{total_count}"
 
 total_count = 0
-seen = ZHash.new
-people = 0
 
-strs.each do |str|
-  if str == ''
-    total_count += seen.values.count {|v| v == people}
-    seen = ZHash.new
-    people = 0
-    next
+grouped_strs.each do |group|
+  seen = ZHash.new
+  group.each do |str|
+    str.chars.each do |ch|
+      seen[ch] += 1
+    end
   end
-
-  str.chars.each do |ch|
-    seen[ch] += 1
-  end
-  people += 1
+  total_count += seen.values.count {|v| v == group.count}
 end
-
-total_count += seen.values.count {|v| v == people}
 
 puts "Part 2: #{total_count}"

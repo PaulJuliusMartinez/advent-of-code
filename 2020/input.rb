@@ -57,6 +57,33 @@ def get_input_str_arr(original_filename)
 end
 
 # For input like:
+# a
+# b
+#
+# abc
+#
+# a
+# b
+# c
+def str_groups_separated_by_blank_lines(original_filename)
+  groups = []
+  curr_group = []
+
+  get_input_str_arr(original_filename).each do |str|
+    if str == ''
+      groups << curr_group
+      curr_group = []
+      next
+    end
+
+    curr_group << str
+  end
+
+  groups << curr_group
+  groups
+end
+
+# For input like:
 # here-is-some-text
 def get_input_str(original_filename)
   get_input_str_arr(original_filename)[0]
