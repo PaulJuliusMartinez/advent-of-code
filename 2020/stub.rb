@@ -1,6 +1,7 @@
 #! /usr/bin/env ruby
 
 require './input.rb'
+require './util.rb'
 
 require 'set'
 require 'prime'

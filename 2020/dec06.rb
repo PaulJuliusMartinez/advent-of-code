@@ -1,6 +1,7 @@
 #! /usr/bin/env ruby
 
 require './input.rb'
+require './util.rb'
 
 require 'set'
 require 'prime'
@@ -28,13 +29,13 @@ total_count += seen.count
 puts "Part 1: #{total_count}"
 
 total_count = 0
-seen = Hash.new {|h, k| h[k] = 0}
+seen = ZHash.new
 people = 0
 
 strs.each do |str|
   if str == ''
     total_count += seen.values.count {|v| v == people}
-    seen = Hash.new {|h, k| h[k] = 0}
+    seen = ZHash.new
     people = 0
     next
   end

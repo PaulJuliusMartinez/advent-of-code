@@ -1,6 +1,7 @@
 #! /usr/bin/env ruby
 
 require './input.rb'
+require './util.rb'
 
 require 'set'
 require 'prime'
@@ -11,7 +12,7 @@ strs = get_input_str_arr(__FILE__)
 num = strs.count do |s|
   min, max, letter, pw = s.scanf("%d-%d %c: %s")
 
-  c = Hash.new {|h, k| h[k] = 0}
+  c = ZHash.new
   pw.chars.each do |ch|
     c[ch] ||= 0
     c[ch] += 1
