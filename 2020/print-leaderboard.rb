@@ -18,7 +18,10 @@ options = {
   year: 2020,
   leaderboard: :google,
   top_n: 15,
+  sort: "score"
 }
+
+VALID_SORTS = %w(score total part1 part2 name)
 
 OptionParser.new do |opts|
   opts.on("-y", "--year [YEAR]", Integer, "Year") do |y|
@@ -39,6 +42,14 @@ OptionParser.new do |opts|
     else
       options[:top_n] = t
     end
+  end
+
+  opts.on("-s", "--sort [SORT]", "Which column to sort by") do |s|
+    if !VALID_SORTS.include?(s)
+      puts "Invalid sort: #{s} (options are #{VALID_SORTS.join(',')})"
+      exit(1)
+    end
+    options[:sort] = s
   end
 
   opts.on("-h", "--hide", "Don't show users that haven't completed the problem yet.") do |h|
@@ -120,35 +131,64 @@ second_star_order = processed_members
   .select {|m| m[:second_star_ts]}
   .sort_by {|m| m[:second_star_ts]}
 
-processed_members.each do |member|
-  rank1 = first_star_order.index(member)
-  member[:first_star_rank] = rank1 + 1 if rank1
-  member[:first_star_score] = members.length + 1 - rank1 if rank1
+part2_order = processed_members
+  .select {|m| m[:second_star_ts]}
+  .sort_by {|m| m[:second_star_ts] - m[:first_star_ts]}
 
-  rank2 = second_star_order.index(member)
-  member[:second_star_rank] = rank2 + 1 if rank2
-  member[:second_star_score] = members.length + 1 - rank2 if rank2
+processed_members.each do |member|
+  part1_rank = first_star_order.index(member)
+  member[:part1_rank] = part1_rank + 1 if part1_rank
+  member[:first_star_score] = members.length + 1 - part1_rank if part1_rank
+
+  total_rank = second_star_order.index(member)
+  member[:total_rank] = total_rank + 1 if total_rank
+  member[:second_star_score] = members.length + 1 - total_rank if total_rank
+
+  part2_rank = part2_order.index(member)
+  member[:part2_rank] = part2_rank + 1 if part2_rank
 
   member[:score] = nil
 
-  if rank1
+  if part1_rank
     member[:score] = member[:first_star_score] + (member[:second_star_score] || 0)
   end
 end
 
 max_t = Time.now.to_i
 sorted_members = processed_members.sort_by do |m|
-  [-(m[:score] || 0), m[:second_star_ts] || max_t, m[:first_star_ts] || max_t, m[:name]]
+  score = -(m[:score] || 0)
+  total_time = m[:second_star_ts] || max_t
+  part1_time = m[:first_star_ts] || max_t
+  part2_time = if m[:second_star_ts]
+                 m[:second_star_ts] - m[:first_star_ts]
+               else
+                 max_t
+               end
+
+  case options[:sort]
+  when "score"
+    [score, total_time, part1_time, m[:name]]
+  when "part1"
+    [part1_time, score, total_time, m[:name]]
+  when "part2"
+    [part2_time, score, total_time, m[:name]]
+  when "total"
+    [total_time, score, part1_time, m[:name]]
+  when "name"
+    [m[:name], score, total_time, part1_time]
+  end
 end
 
-day_start_time = Time.new(YEAR, 11, 30, 21, 0, 0) + ((day - 1) * 24 * 3600)
+day_start_time = Time.new(YEAR, 12, 1, 0, 0, 0, "-05:00") + ((day - 1) * 24 * 3600)
 start_ts = day_start_time.to_i
 
-max_length_name = members.map {|m| m[:name]}.map(&:length).max
+num_to_show = options[:top_n] || sorted_members.count
+max_length_name = sorted_members.take(num_to_show).map {|m| m[:name]}.map(&:length).max
+max_length_name = [max_length_name, "Day #{day} Leaderboard".length].max
 
 puts <<~HEADER
-#{"Day #{day} Leaderboard".center(max_length_name)}   -------Part 1--------   -------Part 2--------
-  #{"Name".center(max_length_name)}     Time  Rank  Score       Time  Rank  Score   Total
+#{"Day #{day} Leaderboard".center(max_length_name)}   -------Part 1--------   ----Part 2-----   ---------Finish-------
+  #{"Name".center(max_length_name)}     Time  Rank  Score     ∆ Time   Rank       Time   Rank  Score   Total
 HEADER
 
 def format_ts(ts, start_ts)
@@ -161,36 +201,43 @@ def format_ts(ts, start_ts)
   "#{hr.to_s.rjust(2, '0')}:#{min.to_s.rjust(2, '0')}:#{s.to_s.rjust(2, '0')}"
 end
 
-num_to_show = options[:top_n] || sorted_members.count
 num_shown = 0
 num_with_scores = sorted_members.count {|m| m[:first_star_ts]}
 
-sorted_members.each do |m|
-  break if num_shown >= num_to_show
-
+sorted_members.take(num_to_show).each do |m|
   name = m[:name]
   time1 = '--:--:--'
-  rank1 = m[:first_star_rank]
+  part1_rank = m[:part1_rank]
   score1 = m[:first_star_score]
 
-  time2 = '--:--:--'
-  rank2 = m[:second_star_rank]
+  total_time = '--:--:--'
+  total_rank = m[:total_rank]
   score2 = m[:second_star_score]
 
+  part2_time = '--:--:--'
+  part2_rank = m[:part2_rank]
+  if m[:second_star_ts]
+    part2_time = format_ts(m[:second_star_ts] - m[:first_star_ts], 0)
+  end
+
   if options[:hide_inactive] && !m[:first_star_ts]
-    break
+    if options[:sort] == 'name'
+      next
+    else
+      break
+    end
   end
 
   total_score = score1
   total_score += score2 if score2
 
   time1 = format_ts(m[:first_star_ts], start_ts) if m[:first_star_ts]
-  time2 = format_ts(m[:second_star_ts], start_ts) if m[:second_star_ts]
+  total_time = format_ts(m[:second_star_ts], start_ts) if m[:second_star_ts]
 
   puts(
     "#{name.ljust(max_length_name)}   " +
-      "#{time1}   #{rank1.to_s.rjust(3)}  #{score1.to_s.rjust(5)}   " +
-      "#{time2}   #{rank2.to_s.rjust(3)}  #{score2.to_s.rjust(5)}   " +
+      "#{time1}   #{part1_rank.to_s.rjust(3)}  #{score1.to_s.rjust(5)}   " +
+      "#{part2_time}    #{part2_rank.to_s.rjust(3)}   #{total_time}    #{total_rank.to_s.rjust(3)}  #{score2.to_s.rjust(5)}   " +
       total_score.to_s.rjust(5),
   )
 
