@@ -18,7 +18,7 @@ options = {
   year: 2020,
   leaderboard: :google,
   top_n: 15,
-  sort: "score"
+  sort: "total",
 }
 
 VALID_SORTS = %w(score total part1 part2 name)
@@ -32,11 +32,11 @@ OptionParser.new do |opts|
     options[:leaderboard] = l.to_sym
   end
 
-  opts.on("-d", "--day [DAY]", Integer, "Day") do |d|
+  opts.on("-d", "--day [DAY]", Integer, "Day (defaults to latest day with a score)") do |d|
     options[:day] = d
   end
 
-  opts.on("-t", "--top [TOP]", Integer, "Top N performers, use -1 to have no limit") do |t|
+  opts.on("-t", "--top [TOP]", Integer, "Top N performers, use -1 to have no limit (default 15)") do |t|
     if t == -1
       options.delete(:top_n)
     else
@@ -44,7 +44,7 @@ OptionParser.new do |opts|
     end
   end
 
-  opts.on("-s", "--sort [SORT]", "Which column to sort by") do |s|
+  opts.on("-s", "--sort [SORT]", "Sort by one of #{VALID_SORTS.join(", ")}") do |s|
     if !VALID_SORTS.include?(s)
       puts "Invalid sort: #{s} (options are #{VALID_SORTS.join(',')})"
       exit(1)
@@ -52,8 +52,13 @@ OptionParser.new do |opts|
     options[:sort] = s
   end
 
-  opts.on("-h", "--hide", "Don't show users that haven't completed the problem yet.") do |h|
+  opts.on("-a", "--active-only", "Don't show users that haven't completed the problem yet.") do |h|
     options[:hide_inactive] = h
+  end
+
+  opts.on("-h", "--help", "Show this help message") do
+    puts opts
+    exit
   end
 end.parse!
 
