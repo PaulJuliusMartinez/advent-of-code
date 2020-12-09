@@ -60,3 +60,23 @@ loop do
 
   start += 1
 end
+
+### Alternate linear-time solution for part 2
+
+start = 0
+stop = 0
+sum = ints[0]
+
+loop do
+  if sum < part1
+    stop += 1
+    sum += ints[stop]
+  elsif sum > part1
+    sum -= ints[start]
+    start += 1
+  else
+    range = ints[start..stop]
+    puts "Part 2 (alternate approach): #{range.min + range.max}"
+    break
+  end
+end
