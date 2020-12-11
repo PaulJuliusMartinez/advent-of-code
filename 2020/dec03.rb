@@ -1,22 +1,23 @@
 #! /usr/bin/env ruby
 
 require './input.rb'
+require './util.rb'
 
 require 'set'
 require 'prime'
 require 'scanf'
 
-$map, HEIGHT, WIDTH = get_grid_input(__FILE__)
+$map, $HEIGHT, $WIDTH = G.get_grid_input(__FILE__)
 
 def count_for_slope(dx, dy)
   x, y = [dx, dy]
 
-  width = WIDTH
+  width = $WIDTH
 
   num_trees = 0
 
-  while y < HEIGHT do
-    if $map[[x, y]] == '#'
+  while y < $HEIGHT do
+    if $map[x][y] == '#'
       num_trees += 1
     end
 
