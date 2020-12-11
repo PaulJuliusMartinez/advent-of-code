@@ -25,7 +25,7 @@ class GB # (GameBoy)
   end
 
   def infinite_looped?
-    @infinted_looped
+    @infinite_looped
   end
 
   def self.parse_instructions(instructions)
