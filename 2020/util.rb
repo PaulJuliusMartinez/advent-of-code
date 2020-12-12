@@ -4,6 +4,18 @@ class ZHash < Hash
   end
 end
 
+# Grid module with following helpers:
+#
+# G.empty
+# G.copy(grid)
+# G.in_bounds?(x, y)
+# G.points
+# G.values(grid)
+# G.points_and_values(grid, &block)
+# G.puts(grid)
+# G.directions
+# G.neighbor_points(x, y)
+# G.neighbors(grid, x, y)
 module G
   # For grid inputs like:
   # .3..###..
