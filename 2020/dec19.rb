@@ -71,7 +71,7 @@ end
 # puts $rules.inspect
 
 
-$cache = {}
+# $cache = {}
 
 def squish(pattern)
   res = []
@@ -125,9 +125,9 @@ def expand(pattern)
     end
   end
 
-  if $cache.key?(pattern)
-    return $cache[pattern]
-  end
+  # if $cache.key?(pattern)
+  #   return $cache[pattern]
+  # end
   # pattern is [3, 6, "a", 8]
   # puts "expand(#{pattern.inspect})"
 
@@ -139,7 +139,7 @@ def expand(pattern)
   if i == pattern.length
     ret =  [pattern.join("")]
     # puts "Returning #{ret.inspect}"
-    $cache[pattern] = ret
+    # $cache[pattern] = ret
 
     if $messages.include?(ret[0])
       $num_found += 1
@@ -160,7 +160,7 @@ def expand(pattern)
     all.concat(squish(expand(before + expanded + after)))
   end
 
-  $cache[pattern] = all
+  # $cache[pattern] = all
 
   all
 end
@@ -173,7 +173,7 @@ $rules[8] = [[42], [42, 8]]
 $rules[11] = [[42, 31], [42, 11, 31]]
 
 $num_found = 0
-$cache = {}
+# $cache = {}
 expand([0])
 
 puts "Part 2: #{$num_found}"
