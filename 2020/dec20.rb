@@ -33,6 +33,7 @@ grouped_strs.each do |tile|
 
   tile.shift
 
+  # This made my input easier to work with lol
   tile.each {|row| row.reverse!}
 
   edge0 = tile[0]
@@ -66,9 +67,6 @@ corner_tile = nil
 
 prod = 1
 $tiles_to_edges.each do |tile_num, edge_vals|
-  num_matching = edge_vals.count do |edge|
-    $edge_counts[edge] == 2
-  end
   # puts "Tile #{tile_num} has #{num_matching} matching edges"
   if edge_vals.count {|edge| $edge_counts[edge] == 2} == 4
     corner_tile = tile_num
@@ -76,7 +74,7 @@ $tiles_to_edges.each do |tile_num, edge_vals|
   end
 end
 
-puts prod
+puts "Part 1: #{prod}"
 
 # Reassemble image
 
@@ -103,14 +101,36 @@ image[0][0] = corner_tile
 # image[0][1] = corner_neighbors[0]
 # image[1][0] = corner_neighbors[1]
 
-puts corner_tile
-puts get_neighbors_of_tile(corner_tile).inspect
-puts image.inspect
+# puts corner_tile
+# puts get_neighbors_of_tile(corner_tile).inspect
+# puts image.inspect
 
 used_tiles = Set.new
 used_tiles << corner_tile
 
+def get_remaining_neighbor_tile(tile1, tile2, used_tiles)
+  tile1_possibilities = get_neighbors_of_tile(tile1)
+  # puts "Around tile1: #{tile1_possibilities.to_a}"
+  tile1_possibilities.to_a.each {|t| tile1_possibilities.delete(t) if used_tiles.include?(t)}
+  # puts "Around tile1 (and unused): #{tile1_possibilities.to_a}"
+
+  if tile2
+    tile2_possibilities = get_neighbors_of_tile(tile2)
+    # puts "Around tile2: #{tile2_possibilities.to_a}"
+    tile2_possibilities.to_a.each {|t| tile2_possibilities.delete(t) if used_tiles.include?(t)}
+    # puts "Around tile2 (and unused): #{tile2_possibilities.to_a}"
+
+    tile1_possibilities &= tile2_possibilities
+  end
+
+  tile1_possibilities
+end
+
 # Assemble image in layers of squares
+#
+#  123
+#  223
+#  333
 (SIZE - 1).times do |layer|
   # Fill right side
   x = layer + 1
@@ -118,51 +138,21 @@ used_tiles << corner_tile
     left = (image[y] || [])[x - 1]
     above = (image[y - 1] || [])[x]
 
-    left_possibilities = get_neighbors_of_tile(left)
-    # puts "Around left: #{left_possibilities.to_a}"
-    left_possibilities.to_a.each {|t| left_possibilities.delete(t) if used_tiles.include?(t)}
-    # puts "Around left (and unused): #{left_possibilities.to_a}"
-
-    if above
-      above_possibilities = get_neighbors_of_tile(above)
-      # puts "Around above: #{above_possibilities.to_a}"
-      above_possibilities.to_a.each {|t| above_possibilities.delete(t) if used_tiles.include?(t)}
-      # puts "Around above (and unused): #{above_possibilities.to_a}"
-
-      left_possibilities &= above_possibilities
-    end
-
-    # puts "Remaining poss.: #{left_possibilities.to_a}"
-
-    # puts "Putting #{left_possibilities.to_a[0]} at (#{x}, #{y})"
-    image[y][x] = left_possibilities.to_a[0]
+    possibilities = get_remaining_neighbor_tile(left, above, used_tiles)
+    # puts "Putting #{possibilities.to_a[0]} at (#{x}, #{y})"
+    image[y][x] = possibilities.to_a[0]
     used_tiles << image[y][x]
   end
 
-  # Fill left side
+  # Fill bottom side
   y = layer + 1
   (layer + 1).times do |x|
     left = (image[y] || [])[x - 1]
     above = (image[y - 1] || [])[x]
 
-    above_possibilities = get_neighbors_of_tile(above)
-    # puts "Around above: #{above_possibilities.to_a}"
-    above_possibilities.to_a.each {|t| above_possibilities.delete(t) if used_tiles.include?(t)}
-    # puts "Around above (and unused): #{above_possibilities.to_a}"
-
-    if left
-      left_possibilities = get_neighbors_of_tile(left)
-      # puts "Around left: #{left_possibilities.to_a}"
-      left_possibilities.to_a.each {|t| left_possibilities.delete(t) if used_tiles.include?(t)}
-      # puts "Around left (and unused): #{left_possibilities.to_a}"
-
-      above_possibilities &= left_possibilities
-    end
-
-    # puts "Remaining poss.: #{above_possibilities.to_a}"
-
-    # puts "Putting #{above_possibilities.to_a[0]} at (#{x}, #{y})"
-    image[y][x] = above_possibilities.to_a[0]
+    possibilities = get_remaining_neighbor_tile(above, left, used_tiles)
+    # puts "Putting #{possibilities.to_a[0]} at (#{x}, #{y})"
+    image[y][x] = possibilities.to_a[0]
     used_tiles << image[y][x]
   end
 
@@ -171,37 +161,10 @@ used_tiles << corner_tile
   n1 = image[layer][layer + 1]
   n2 = image[layer + 1][layer]
 
-  n1_possibilities = get_neighbors_of_tile(n1)
-  # puts "Around n1: #{n1_possibilities.to_a}"
-  n1_possibilities.to_a.each {|t| n1_possibilities.delete(t) if used_tiles.include?(t)}
-  # puts "Around n1 (and unused): #{n1_possibilities.to_a}"
-
-  if n2
-    n2_possibilities = get_neighbors_of_tile(n2)
-    # puts "Around n2: #{n2_possibilities.to_a}"
-    n2_possibilities.to_a.each {|t| n2_possibilities.delete(t) if used_tiles.include?(t)}
-    # puts "Around n2 (and unused): #{n2_possibilities.to_a}"
-
-    n1_possibilities &= n2_possibilities
-  end
-
-  # puts "Remaining poss.: #{n1_possibilities.to_a}"
-
-  # puts "Putting #{n1_possibilities.to_a[0]} at (#{layer + 1}, #{layer + 1})"
-  image[layer + 1][layer + 1] = n1_possibilities.to_a[0]
+  possibilities = get_remaining_neighbor_tile(n1, n2, used_tiles)
+  # puts "Putting #{possibilities.to_a[0]} at (#{layer + 1}, #{layer + 1})"
+  image[layer + 1][layer + 1] = possibilities.to_a[0]
   used_tiles << image[layer + 1][layer + 1]
-end
-
-
-def matching_edge_between_tiles(tile1, tile2)
-  $tiles_to_edges[tile1].each do |edge|
-    $edge_vals_to_tiles[edge].each do |neighbor_tile|
-      return edge if neighbor_tile == tile2
-    end
-  end
-
-  puts "NO MATCHING EDGE"
-  exit(1)
 end
 
 def rotate_tile_left(tile)
@@ -213,8 +176,8 @@ def rotate_tile_left(tile)
     width.times do |x|
       # top right: y:0, x:w to y:0, x: 0
       # top left: y:0, x:0 to y:w, x: 0
-      # bottom left: y:l, x:0 to y:l, x: l
-      # bottom right: y:l, x:l to y:0, x:l
+      # bottom left: y:h, x:0 to y:w, x:h
+      # bottom right: y:h, x:w to y:0, x:h
       new_tile[width - 1 - x][y] = tile[y][x]
     end
   end
@@ -226,25 +189,13 @@ def rotate_tile_left(tile)
   new_tile
 end
 
-def rotate_tile_180(tile)
-  rotate_tile_left(rotate_tile_left(tile))
-end
-
-def rotate_tile_right(tile)
-  rotate_tile_left(rotate_tile_left(rotate_tile_left(tile)))
-end
-
 def flip_horizontal(tile)
   tile.map {|s| s.reverse}
 end
 
-def flip_vertical(tile)
-  tile.reverse
-end
-
-image.each do |row|
-  puts row.join("  ")
-end
+# image.each do |row|
+#   puts row.join("  ")
+# end
 
 oriented_tiles = Array.new(SIZE) {Array.new(SIZE)}
 oriented_outer_tiles = Array.new(SIZE) {Array.new(SIZE)}
@@ -269,16 +220,16 @@ def put_tile(tile)
   tile.each {|s| puts s}
 end
 
-put_tile(oriented_outer_tiles[0][0])
-
-puts "****************"
-puts image[0][0]
-put_outer_tile_num(image[0][0])
-puts "****************"
-puts image[0][1]
-put_outer_tile_num(image[0][1])
-
-puts "****************"
+# put_tile(oriented_outer_tiles[0][0])
+# 
+# puts "****************"
+# puts image[0][0]
+# put_outer_tile_num(image[0][0])
+# puts "****************"
+# puts image[0][1]
+# put_outer_tile_num(image[0][1])
+# 
+# puts "****************"
 
 
 # Fill in top row
@@ -330,7 +281,7 @@ puts "****************"
   end
 end
 
-puts "FILLING IN ROWS BELOW"
+# puts "FILLING IN ROWS BELOW"
 
 (SIZE - 1).times do |y|
   y = y + 1
@@ -410,9 +361,9 @@ def put_spaced_outer_tiles(tiles)
   end
 end
 
-put_spaced_outer_tiles(oriented_outer_tiles)
-puts '**********'
-put_spaced_inner_tiles(oriented_tiles)
+# put_spaced_outer_tiles(oriented_outer_tiles)
+# puts '**********'
+# put_spaced_inner_tiles(oriented_tiles)
 
 
 final_grid = []
@@ -427,8 +378,8 @@ SIZE.times do |outer_y|
   end
 end
 
-puts final_grid[0]
-puts final_grid.last
+# puts final_grid[0]
+# puts final_grid.last
 
 
 SEA_MONSTER = [
@@ -437,12 +388,12 @@ SEA_MONSTER = [
   " #  #  #  #  #  #   ",
 ]
 
-puts final_grid.length
-puts final_grid[0].length
+# puts final_grid.length
+# puts final_grid[0].length
 
 is_sea_monster = Array.new(96) {Array.new(96) {false}}
 
-put_tile(final_grid)
+# put_tile(final_grid)
 
 [false, true].each do |should_flip|
   [0, 1, 2, 3].each do |rotate|
@@ -454,8 +405,8 @@ put_tile(final_grid)
     # put_tile(sm)
 
     # Loop over every starting point
-    96.times do |start_x|
-      96.times do |start_y|
+    (8 * SIZE).times do |start_x|
+      (8 * SIZE).times do |start_y|
         found_sea_monster = true
 
         sm.length.times do |dy|
@@ -472,7 +423,7 @@ put_tile(final_grid)
         end
 
         if found_sea_monster
-          puts "Found sea monster at y:#{start_y}, x:#{start_x}"
+          # puts "Found sea monster at y:#{start_y}, x:#{start_x}"
           sm.length.times do |dy|
             sm[0].length.times do |dx|
               if sm[dy][dx] == '#'
@@ -487,13 +438,6 @@ put_tile(final_grid)
 end
 
 total_hash = final_grid.join("").chars.count {|ch| ch == '#'}
-sea_monster_points = 0
-is_sea_monster.each do |ism_row|
-  ism_row.each do |ism_cell|
-    sea_monster_points += 1 if ism_cell
-  end
-end
-puts total_hash
-puts sea_monster_points
+sea_monster_points = is_sea_monster.map {|ism_row| ism_row.count(&:itself)}.sum
 
 puts "Part 2: #{total_hash - sea_monster_points}"
