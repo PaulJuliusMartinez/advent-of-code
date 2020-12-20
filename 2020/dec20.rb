@@ -28,6 +28,12 @@ end
 $tile_nums_to_outer_tile = {}
 $tile_nums_to_inner_tile = {}
 
+def extract_inner_tile(tile)
+  inner_tile = tile[1..-2]
+  inner_tile.map! {|str| str[1..-2]}
+  inner_tile
+end
+
 grouped_strs.each do |tile|
   tile_num = tile[0].split(" ")[1].to_i
 
@@ -54,10 +60,7 @@ grouped_strs.each do |tile|
     $edge_vals_to_tiles[val] << tile_num
   end
 
-  inner_tile = tile[1..-2]
-  inner_tile.map! {|str| str[1..-2]}
-
-  $tile_nums_to_inner_tile[tile_num] = inner_tile
+  $tile_nums_to_inner_tile[tile_num] = extract_inner_tile(tile)
   $tile_nums_to_outer_tile[tile_num] = tile
 
   $tiles_to_edges[tile_num] = all
@@ -167,6 +170,10 @@ end
   used_tiles << image[layer + 1][layer + 1]
 end
 
+# image.each do |row|
+#   puts row.join("  ")
+# end
+
 def rotate_tile_left(tile)
   width = tile[0].length
   height = tile.length
@@ -193,21 +200,6 @@ def flip_horizontal(tile)
   tile.map {|s| s.reverse}
 end
 
-# image.each do |row|
-#   puts row.join("  ")
-# end
-
-oriented_tiles = Array.new(SIZE) {Array.new(SIZE)}
-oriented_outer_tiles = Array.new(SIZE) {Array.new(SIZE)}
-
-# My input
-oriented_tiles[0][0] = rotate_tile_left($tile_nums_to_inner_tile[image[0][0]])
-oriented_outer_tiles[0][0] = rotate_tile_left($tile_nums_to_outer_tile[image[0][0]])
-
-# Ex1
-# oriented_tiles[0][0] = rotate_tile_left(flip_horizontal($tile_nums_to_inner_tile[image[0][0]]))
-# oriented_outer_tiles[0][0] = rotate_tile_left(flip_horizontal($tile_nums_to_outer_tile[image[0][0]]))
-
 def put_inner_tile_num(tile_num)
   put_tile($tile_nums_to_inner_tile[tile_num])
 end
@@ -219,6 +211,35 @@ end
 def put_tile(tile)
   tile.each {|s| puts s}
 end
+
+def for_each_orientation(tile)
+  [false, true].each do |should_flip|
+    [0, 1, 2, 3].each do |rotate|
+      orientation = tile
+      orientation = flip_horizontal(orientation) if should_flip
+      rotate.times {orientation = rotate_tile_left(orientation)}
+      yield orientation
+    end
+  end
+end
+
+oriented_tiles = Array.new(SIZE) {Array.new(SIZE)}
+oriented_outer_tiles = Array.new(SIZE) {Array.new(SIZE)}
+
+# Figure out orientation of top-left corner:
+for_each_orientation($tile_nums_to_outer_tile[image[0][0]]) do |tile|
+  right_edge = tile.map(&:chars).map(&:last).join("")
+  bottom_edge = tile.last
+
+  right_edge_match = ($edge_vals_to_tiles[edge_to_i(right_edge)] - [image[0][0]])[0]
+  bottom_edge_match = ($edge_vals_to_tiles[edge_to_i(bottom_edge)] - [image[0][0]])[0]
+
+  if right_edge_match == image[0][1] && bottom_edge_match == image[1][0]
+    oriented_outer_tiles[0][0] = tile
+    oriented_tiles[0][0] = extract_inner_tile(tile)
+  end
+end
+
 
 # put_tile(oriented_outer_tiles[0][0])
 # 
@@ -237,47 +258,27 @@ end
   x = x + 1
   me = image[0][x]
 
-  my_inner_tile = $tile_nums_to_inner_tile[me]
   my_outer_tile = $tile_nums_to_outer_tile[me]
 
   right_edge = oriented_outer_tiles[0][x-1].map(&:chars).map(&:last).join("")
 
   # puts "right edge: #{right_edge}"
 
-  found_orientation = false
-  [false, true].each do |should_flip|
-    [0, 1, 2, 3].each do |rotate|
-      # puts "flip?: #{should_flip}, times: #{rotate}"
+  for_each_orientation(my_outer_tile) do |o_outer|
+    o_inner = extract_inner_tile(o_outer)
+    left_edge = o_outer.map {|s| s[0]}.join("")
 
-      o_inner = my_inner_tile
-      o_outer = my_outer_tile
-      o_inner = flip_horizontal(o_inner) if should_flip
-      o_outer = flip_horizontal(o_outer) if should_flip
-      rotate.times do
-        o_inner = rotate_tile_left(o_inner)
-        o_outer = rotate_tile_left(o_outer)
-      end
+    # puts "left edge (of below): #{left_edge}"
+    # puts '---'
+    # put_tile(o_outer)
+    # puts '---'
 
-      left_edge = o_outer.map {|s| s[0]}.join("")
-
-      # puts "left edge (of below): #{left_edge}"
-      # puts '---'
-      # put_tile(o_outer)
-      # puts '---'
-
-      if right_edge == left_edge
-        oriented_tiles[0][x] = o_inner
-        oriented_outer_tiles[0][x] = o_outer
-        found_orientation = true
-        # puts "found orientation!: rotate?: #{should_flip}, times: #{rotate}"
-        break
-      end
+    if right_edge == left_edge
+      oriented_tiles[0][x] = o_inner
+      oriented_outer_tiles[0][x] = o_outer
+      # puts "found orientation!: rotate?: #{should_flip}, times: #{rotate}"
+      break
     end
-    break if found_orientation
-  end
-
-  if !found_orientation
-    puts "Didn't find orientation"
   end
 end
 
@@ -290,47 +291,28 @@ end
 
     # puts "TRYING TO orient y:#{y}, x:#{x}"
 
-    my_inner_tile = $tile_nums_to_inner_tile[me]
     my_outer_tile = $tile_nums_to_outer_tile[me]
 
     bottom_edge = oriented_outer_tiles[y - 1][x].last
 
     # puts "bottom edge: #{bottom_edge}"
 
-    found_orientation = false
-    [false, true].each do |should_flip|
-      [0, 1, 2, 3].each do |rotate|
-        # puts "flip?: #{should_flip}, times: #{rotate}"
+    for_each_orientation(my_outer_tile) do |o_outer|
+      o_inner = extract_inner_tile(o_outer)
 
-        o_inner = my_inner_tile
-        o_outer = my_outer_tile
-        o_inner = flip_horizontal(o_inner) if should_flip
-        o_outer = flip_horizontal(o_outer) if should_flip
-        rotate.times do
-          o_inner = rotate_tile_left(o_inner)
-          o_outer = rotate_tile_left(o_outer)
-        end
+      top_edge = o_outer[0]
 
-        top_edge = o_outer[0]
+      # puts "top edge (of above): #{top_edge}"
+      # puts '---'
+      # put_tile(o_outer)
+      # puts '---'
 
-        # puts "top edge (of above): #{top_edge}"
-        # puts '---'
-        # put_tile(o_outer)
-        # puts '---'
-
-        if bottom_edge == top_edge
-          oriented_tiles[y][x] = o_inner
-          oriented_outer_tiles[y][x] = o_outer
-          found_orientation = true
-          # puts "found orientation!: rotate?: #{should_flip}, times: #{rotate}"
-          break
-        end
+      if bottom_edge == top_edge
+        oriented_tiles[y][x] = o_inner
+        oriented_outer_tiles[y][x] = o_outer
+        # puts "found orientation!: rotate?: #{should_flip}, times: #{rotate}"
+        break
       end
-      break if found_orientation
-    end
-
-    if !found_orientation
-      puts "Didn't find orientation"
     end
   end
 end
