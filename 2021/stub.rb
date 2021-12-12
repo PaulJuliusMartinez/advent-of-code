@@ -12,4 +12,9 @@ grouped_strs = str_groups_separated_by_blank_lines(__FILE__)
 str = get_input_str(__FILE__)
 ints = get_multi_line_input_int_arr(__FILE__)
 ints = get_single_line_input_int_arr(__FILE__, separator: ',')
-grid, $HEIGHT, $WIDTH = G.get_grid_input(__FILE__)
+
+p1 = 0
+p2 = 0
+
+strs.each do |str|
+end
