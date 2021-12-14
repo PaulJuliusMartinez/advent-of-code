@@ -1,0 +1,113 @@
+AllCops:
+  DisabledByDefault: true
+
+Lint/AmbiguousAssignment:
+  Enabled: true
+
+Lint/AmbiguousBlockAssociation:
+  Enabled: true
+
+Lint/AmbiguousOperator:
+  Enabled: true
+
+Lint/AmbiguousOperatorPrecedence:
+  Enabled: true
+
+Lint/AmbiguousRange:
+  Enabled: true
+
+Lint/AssignmentInCondition:
+  Enabled: true
+
+Lint/BinaryOperatorWithIdenticalOperands:
+  Enabled: true
+
+Lint/DuplicateCaseCondition:
+  Enabled: true
+
+Lint/DuplicateElsifCondition:
+  Enabled: true
+
+Lint/DuplicateHashKey:
+  Enabled: true
+
+Lint/DuplicateMethods:
+  Enabled: true
+
+Lint/ElseLayout:
+  Enabled: true
+
+Lint/EmptyConditionalBody:
+  Enabled: true
+
+Lint/EmptyExpression:
+  Enabled: true
+
+Lint/EmptyInterpolation:
+  Enabled: true
+
+Lint/EmptyWhen:
+  Enabled: true
+
+Lint/InterpolationCheck:
+  Enabled: true
+
+Lint/MultipleComparison:
+  Enabled: true
+
+Lint/NoReturnInBeginEndBlocks:
+  Enabled: true
+
+Lint/NonLocalExitFromIterator:
+  Enabled: true
+
+Lint/ParenthesesAsGroupedExpression:
+  Enabled: true
+
+Lint/RequireParentheses:
+  Enabled: true
+
+Lint/SafeNavigationChain:
+  Enabled: true
+
+Lint/SafeNavigationConsistency:
+  Enabled: true
+
+Lint/SafeNavigationWithEmpty:
+  Enabled: true
+
+Lint/SelfAssignment:
+  Enabled: true
+
+Lint/ShadowedArgument:
+  Enabled: true
+
+Lint/ShadowingOuterLocalVariable:
+  Enabled: true
+
+Lint/Syntax:
+  Enabled: true
+
+Lint/UnreachableCode:
+  Enabled: true
+
+Lint/UnreachableLoop:
+  Enabled: true
+
+Lint/UnusedBlockArgument:
+  Enabled: true
+
+Lint/UnusedLocalVariable:
+  Enabled: true
+
+Lint/UnusedMethodArgument:
+  Enabled: true
+
+Lint/UselessAssignment:
+  Enabled: true
+
+Lint/UselessMethodDefinition:
+  Enabled: true
+
+Lint/Void:
+  Enabled: true
