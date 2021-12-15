@@ -13,8 +13,5 @@ str = get_input_str(__FILE__)
 ints = get_multi_line_input_int_arr(__FILE__)
 ints = get_single_line_input_int_arr(__FILE__, separator: ',')
 
-p1 = 0
-p2 = 0
-
 strs.each do |str|
 end
