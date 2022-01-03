@@ -1,0 +1,159 @@
+inp w
+# w = i; x = x, y = y, z = z
+
+mul x 0
+# w = i; x = 0, y, z
+
+add x z
+# w = i; x = z, y = y, z = z
+
+mod x 26
+# w = i; x = z % 26, y = y, z = z
+
+div z 1, div z 26
+# w = i; x = z % 26, y = y, z = z       (if div 1)
+# w = i; x = z % 26, y = y, z = z % 26  (if div 26)
+
+add x 14, add x 15, add x 12, add x 11, add x -5, add x -13, add x -16, add x -8, add x 0, add x -4
+# w = i; x = z % 26 + C1, y = y, z = z       (if div 1)
+# w = i; x = z % 26 + C1, y = y, z = z % 26  (if div 26)
+
+neq x w
+# w = i; x = (z % 26 + C1) != i, y = y, z = z       (if div 1)
+# w = i; x = (z % 26 + C1) != i, y = y, z = z % 26  (if div 26)
+# w = i; x = 0                 , y = y, z = z       (if div 1  and large C1)
+# w = i; x = 0                 , y = y, z = z % 26  (if div 26 and large C1)
+
+mul y 0
+add y 25
+# w = i; x = (z % 26 + C1) != i, y = 25, z = z       (if div 1)
+# w = i; x = (z % 26 + C1) != i, y = 25, z = z % 26  (if div 26)
+# w = i; x = 0                 , y = 25, z = z       (if div 1  and large C1)
+# w = i; x = 0                 , y = 25, z = z % 26  (if div 26 and large C1)
+
+mul y x
+add y 1
+# w = i; x = (z % 26 + C1) != i, y = 1 or 26, z = z       (if div 1)
+# w = i; x = (z % 26 + C1) != i, y = 1 or 26, z = z % 26  (if div 26)
+# w = i; x = 0                 , y = 1      , z = z       (if div 1  and large C1)
+# w = i; x = 0                 , y = 1      , z = z % 26  (if div 26 and large C1)
+
+mul z y
+# w = i; x = (z % 26 + C1) != i, y = 1 or 26, z = z * 1 or 26        (if div 1)
+# w = i; x = (z % 26 + C1) != i, y = 1 or 26, z = (z % 26) * 1 or 26  (if div 26)
+# w = i; x = 0                 , y = 1      , z = z                  (if div 1  and large C1)
+# w = i; x = 0                 , y = 1      , z = z % 26             (if div 26 and large C1)
+
+mul y 0
+add y w
+add y 12, add y 7, add y 1, add y 2, add y 4, add y 15, add y 11, add y 5, add y 3, add y 9
+# w = i; x = (z % 26 + C1) != i, y = i + C2, z = z * 1 or 26        (if div 1)
+# w = i; x = (z % 26 + C1) != i, y = i + C2, z = (z % 26) * 1 or 26  (if div 26)
+# w = i; x = 0                 , y = i + C2, z = z                  (if div 1  and large C1)
+# w = i; x = 0                 , y = i + C2, z = z % 26             (if div 26 and large C1)
+
+mul y x
+# w = i; x = (z % 26 + C1) != i, y = (i + C2) or 0, z = z * 1 or 26        (if div 1)
+# w = i; x = (z % 26 + C1) != i, y = (i + C2) or 0, z = (z % 26) * 1 or 26  (if div 26)
+# w = i; x = 0                 , y = 0            , z = z                  (if div 1  and large C1)
+# w = i; x = 0                 , y = 0            , z = z % 26             (if div 26 and large C1)
+
+add z y
+# w = i; x = (z % 26 + C1) != i, y = (i + C2) or 0, z = z + (i + C2) or 0                     (if div 1)
+# w = i; x = 0                 , y = 0            , z = z                                     (if div 1  and large C1)
+
+# w = i; x = (z % 26 + C1) != i, y = (i + C2) or 0, z = (z % 26) * (1 or 26) + ((i + C2) or 0) (if div 26)
+# w = i; x = 0                 , y = 0            , z = z % 26                                (if div 26 and large C1)
+
+
+
+# COND = (z % 26 + C1) != i
+# z = z        * (COND ? 26 : 1) + (COND ? (i + C2) : 0)      (if div 1)
+# z = (z / 26) * (COND ? 26 : 1) + (COND ? (i + C2) : 0)      (if div 26)
+
+When div == 1: z = 26z + i + C2
+
+
+On div  1: z = 26z + i + C2
+  Set i = max such that i < 26
+On div 26: z /= 26
+
+  div_arg:   1, c1:  14, c2:  12
+  div_arg:   1, c1:  15, c2:   7
+  div_arg:   1, c1:  12, c2:   1
+  div_arg:   1, c1:  11, c2:   2
+  div_arg:  26, c1:  -5, c2:   4
+  div_arg:   1, c1:  14, c2:  15
+  div_arg:   1, c1:  15, c2:  11
+  div_arg:  26, c1: -13, c2:   5
+  div_arg:  26, c1: -16, c2:   3
+  div_arg:  26, c1:  -8, c2:   9
+  div_arg:   1, c1:  15, c2:   2
+  div_arg:  26, c1:  -8, c2:   3
+  div_arg:  26, c1:   0, c2:   3
+  div_arg:  26, c1:  -4, c2:  11   => Need z < 26, z % 26 + c1 == i
+
+If div arg == 26:
+  ALWAYS set i = z % 26 + C1
+
+To get 0: need z < 26, z % 26 - 4 == i
+
+To get < 26,
+  If div  1: need z % 26 + C1 == i
+
+  If div 26:
+    need z < 26 * 26
+
+
+
+
+inp w
+mul x 0
+# w = i; x = 0
+
+add x z
+# w = i; x = z
+
+mod x 26
+# w = i; x = z % 26
+
+div z 1, div z 26
+# w = i; x = z % 26, z = z       (if div 1)
+# w = i; x = z % 26, z = z / 26  (if div 26)
+
+add x 14, add x 15, add x 12, add x 11, add x -5, add x -13, add x -16, add x -8, add x 0, add x -4
+# w = i; x = z % 26 + C1, z = z       (if div 1)
+# w = i; x = z % 26 + C1, z = z / 26  (if div 26)
+
+neq x w
+# COND = (z % 26 + C1) != i
+# w = i; x = COND, z = z       (if div 1)
+# w = i; x = COND, z = z / 26  (if div 26)
+
+mul y 0
+add y 25
+
+mul y x
+add y 1
+# COND = (z % 26 + C1) != i
+# w = i; x = COND, y = (COND ? 26 : 1), z = z       (if div 1)
+# w = i; x = COND, y = (COND ? 26 : 1), z = z / 26  (if div 26)
+
+mul z y
+# w = i; x = COND, y = (COND ? 26 : 1), z = z      * (COND ? 26 : 1)    (if div 1)
+# w = i; x = COND, y = (COND ? 26 : 1), z = z / 26 * (COND ? 26 : 1)    (if div 26)
+
+mul y 0
+add y w
+add y 12, add y 7, add y 1, add y 2, add y 4, add y 15, add y 11, add y 5, add y 3, add y 9
+# w = i; x = COND, y = i + C2, z = z      * (COND ? 26 : 1) (if div 1)
+# w = i; x = COND, y = i + C2, z = z / 26 * (COND ? 26 : 1) (if div 26)
+
+mul y x
+# w = i; x = COND, y = (COND ? (i + C2) : 0), z = z      * (COND ? 26 : 1) (if div 1)
+# w = i; x = COND, y = (COND ? (i + C2) : 0), z = z / 26 * (COND ? 26 : 1) (if div 26)
+
+
+add z y
+# w = i; x = COND, y = (COND ? (i + C2) : 0), z = z      * (COND ? 26 : 1) + (COND ? (i + C2) : 0)      (if div 1)
+# w = i; x = COND, y = (COND ? (i + C2) : 0), z = z / 26 * (COND ? 26 : 1) + (COND ? (i + C2) : 0)      (if div 26)
