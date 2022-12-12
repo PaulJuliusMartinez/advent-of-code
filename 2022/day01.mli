@@ -1,1 +1,3 @@
-val problem_name  : string
+open Async
+
+val solve : unit -> unit Deferred.t
