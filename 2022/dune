@@ -1,0 +1,4 @@
+(executable
+  (name aoc)
+  (libraries core stdio async core_unix.command_unix cohttp cohttp-async yojson)
+  (preprocess (pps ppx_jane)))
