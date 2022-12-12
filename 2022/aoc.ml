@@ -14,6 +14,8 @@ let solve =
        else
          match day with
          | 1 -> Day01.solve ()
+         | 2 -> Day02.solve ()
+         | 3 -> Day03.solve ()
          | _ -> failwith ("No solution implemented for Day " ^ Int.to_string day))
 ;;
 
