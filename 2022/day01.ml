@@ -1,5 +1,5 @@
 open Core
-open Async
+open Util
 
 let break_up_by_empty_lines lines =
   let f line (grouped_nums, current_nums) =
@@ -15,17 +15,16 @@ let break_up_by_empty_lines lines =
 
 let sum_list = List.sum (module Int) ~f:Fn.id
 
-let solve () =
-  let%map input = Problem_input.fetch_input ~year:2022 ~day:1 in
+let solve input =
   let lines = String.split_lines input in
   let grouped_counts = break_up_by_empty_lines lines in
   let elf_total_calories = List.map grouped_counts ~f:sum_list in
   let most_calories =
     Option.value_exn (List.max_elt elf_total_calories ~compare:Int.compare)
   in
-  print_endline ("Part 1: " ^ Int.to_string most_calories);
+  print_part1 most_calories;
   let elves_sorted_calories = List.sort elf_total_calories ~compare:Int.descending in
   let top_3_elves = List.take elves_sorted_calories 3 in
   let sum_top_3 = sum_list top_3_elves in
-  print_endline ("Part 2: " ^ Int.to_string sum_top_3)
+  print_part2 sum_top_3
 ;;

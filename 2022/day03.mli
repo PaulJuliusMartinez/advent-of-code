@@ -1,3 +1,1 @@
-open Async
-
-val solve : unit -> unit Deferred.t
+val solve : string -> unit

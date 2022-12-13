@@ -1,5 +1,5 @@
 open Core
-open Async
+open Util
 
 let lowercase_offset = Char.to_int 'a' - 1
 let uppercase_offset = Char.to_int 'A' - 1
@@ -43,14 +43,13 @@ let badge_priority group =
   |> Hash_set.to_list |> List.hd_exn |> priority
 ;;
 
-let solve () =
-  let%map input = Problem_input.fetch_input ~year:2022 ~day:3 in
+let solve input =
   let lines = String.split_lines input in
   let sum_priorities =
     List.sum (module Int) ~f:(fun l -> shared_item l |> priority) lines
   in
-  print_endline ("Part 1: " ^ Int.to_string sum_priorities);
+  print_part1 sum_priorities;
   let elf_groups = in_groups_of_n lines 3 in
   let sum_badges = List.sum (module Int) ~f:badge_priority elf_groups in
-  print_endline ("Part 2: " ^ Int.to_string sum_badges)
+  print_part2 sum_badges
 ;;

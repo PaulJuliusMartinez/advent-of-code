@@ -1,5 +1,5 @@
 open Core
-open Async
+open Util
 
 let rock = 1
 let paper = 2
@@ -34,11 +34,10 @@ let rps_result2 = function
   | _ -> 10000
 ;;
 
-let solve () =
-  let%map input = Problem_input.fetch_input ~year:2022 ~day:2 in
+let solve input =
   let lines = String.split_lines input in
   let score = List.sum (module Int) ~f:rps_result lines in
-  print_endline ("Part 1: " ^ Int.to_string score);
+  print_part1 score;
   let score2 = List.sum (module Int) ~f:rps_result2 lines in
-  print_endline ("Part 2: " ^ Int.to_string score2)
+  print_part2 score2
 ;;
