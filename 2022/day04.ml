@@ -3,10 +3,7 @@ open Util
 
 let parse input =
   List.map input ~f:(fun s ->
-      let first, second = String.lsplit2_exn ~on:',' s in
-      let s1, e1 = String.lsplit2_exn ~on:'-' first in
-      let s2, e2 = String.lsplit2_exn ~on:'-' second in
-      ((Int.of_string s1, Int.of_string e1), (Int.of_string s2, Int.of_string e2)))
+      Scanf.sscanf s "%d-%d,%d-%d" (fun a b c d -> ((a, b), (c, d))))
 ;;
 
 let fully_overlaps ((s1, e1), (s2, e2)) = (s1 <= s2 && e2 <= e1) || (s2 <= s1 && e1 <= e2)
