@@ -47,12 +47,12 @@ let parse input =
 (* Unsure of runtime of OCaml list operations, so not sure if this is
    accidentally O(n^2). *)
 let move_between ~stacks ~count ~from ~too ~rev =
-  let from_stack = Array.get stacks from in
+  let from_stack = stacks.(from) in
   let popped = List.take from_stack count in
-  let to_stack = Array.get stacks too in
-  Array.set stacks from (List.drop from_stack count);
+  let to_stack = stacks.(too) in
+  stacks.(from) <- List.drop from_stack count;
   let moved = if rev then List.rev popped else popped in
-  Array.set stacks too (List.concat [ moved; to_stack ])
+  stacks.(too) <- List.concat [ moved; to_stack ]
 ;;
 
 (*
