@@ -7,3 +7,6 @@ val print_part2 : int -> unit
 val list_sum : int list -> int
 val list_max : int list -> int
 val list_min : int list -> int
+val array_sum : int array -> int
+val array_max : int array -> int
+val array_min : int array -> int
