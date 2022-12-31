@@ -1,5 +1,2 @@
 version = 0.23.0
-margin = 90
-let-binding-spacing = double-semicolon
-break-separators = before
-if-then-else = keyword-first
+profile = janestreet

@@ -14,14 +14,14 @@ let solve input =
   let rest = List.tl_exn (List.tl_exn (List.tl_exn chars)) in
   let index, _ =
     List.findi_exn rest ~f:(fun _ ch ->
-        if Char.(
-             !c1 <> !c2 && !c2 <> !c3 && !c3 <> ch && !c1 <> !c3 && !c1 <> ch && !c2 <> ch)
-        then true
-        else (
-          c1 := !c2;
-          c2 := !c3;
-          c3 := ch;
-          false))
+      if Char.(
+           !c1 <> !c2 && !c2 <> !c3 && !c3 <> ch && !c1 <> !c3 && !c1 <> ch && !c2 <> ch)
+      then true
+      else (
+        c1 := !c2;
+        c2 := !c3;
+        c3 := ch;
+        false))
   in
   print_part1 (index + 4);
   let count = ref 14 in

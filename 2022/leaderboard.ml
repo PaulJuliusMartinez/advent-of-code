@@ -3,7 +3,12 @@ open Async
 open Cohttp
 open Cohttp_async
 
-type t = Xtech | Affinity | Google | Otto | Jane_street
+type t =
+  | Xtech
+  | Affinity
+  | Google
+  | Otto
+  | Jane_street
 
 module Leaderboard_id =
   String_id.Make
@@ -22,15 +27,14 @@ let to_leaderboard_id = function
 
 let lookup name =
   let leaderboards =
-    [
-      ("js", Jane_street);
-      ("jane-street", Jane_street);
-      ("jane_street", Jane_street);
-      ("janestreet", Jane_street);
-      ("xtech", Xtech);
-      ("affinity", Affinity);
-      ("google", Google);
-      ("otto", Otto);
+    [ "js", Jane_street
+    ; "jane-street", Jane_street
+    ; "jane_street", Jane_street
+    ; "janestreet", Jane_street
+    ; "xtech", Xtech
+    ; "affinity", Affinity
+    ; "google", Google
+    ; "otto", Otto
     ]
   in
   List.Assoc.find leaderboards ~equal:String.equal name
@@ -38,12 +42,11 @@ let lookup name =
 
 let fetch_path t ~year =
   String.concat
-    [
-      "https://adventofcode.com/";
-      Int.to_string year;
-      "/leaderboard/private/view/";
-      Leaderboard_id.to_string (to_leaderboard_id t);
-      ".json";
+    [ "https://adventofcode.com/"
+    ; Int.to_string year
+    ; "/leaderboard/private/view/"
+    ; Leaderboard_id.to_string (to_leaderboard_id t)
+    ; ".json"
     ]
 ;;
 
@@ -51,12 +54,11 @@ let ts_to_time_ns seconds = Time_ns.of_span_since_epoch (Time_ns.Span.of_int_sec
 
 let cache_path t ~year =
   String.concat
-    [
-      "leaderboard.";
-      Leaderboard_id.to_string (to_leaderboard_id t);
-      ".";
-      Int.to_string year;
-      ".json";
+    [ "leaderboard."
+    ; Leaderboard_id.to_string (to_leaderboard_id t)
+    ; "."
+    ; Int.to_string year
+    ; ".json"
     ]
 ;;
 
@@ -75,7 +77,7 @@ let cache_data ~data ~cache_path =
 
 let fetch_data t ~year =
   let cookie = String.strip (In_channel.read_all "cookie") in
-  let headers = Header.of_list [ ("cache-control", "max-age=0"); ("cookie", cookie) ] in
+  let headers = Header.of_list [ "cache-control", "max-age=0"; "cookie", cookie ] in
   let url = Uri.of_string (fetch_path t ~year) in
   let%bind _, body = Client.get ~headers url in
   Body.to_string body
@@ -93,13 +95,11 @@ let load_data t ~year =
   in
   match%bind Sys.file_exists cache_path with
   | `Yes ->
-      let json = Yojson.Basic.from_file cache_path in
-      let open Yojson.Basic.Util in
-      let last_fetched_at =
-        json |> member last_fetched_at_key |> to_int |> ts_to_time_ns
-      in
-      let refetch_at = Time_ns.add last_fetched_at max_fetch_frequency in
-      if Time_ns.( < ) (Time_ns.now ()) refetch_at then return json else refetch_data ()
+    let json = Yojson.Basic.from_file cache_path in
+    let open Yojson.Basic.Util in
+    let last_fetched_at = json |> member last_fetched_at_key |> to_int |> ts_to_time_ns in
+    let refetch_at = Time_ns.add last_fetched_at max_fetch_frequency in
+    if Time_ns.( < ) (Time_ns.now ()) refetch_at then return json else refetch_data ()
   | _ -> refetch_data ()
 ;;
 

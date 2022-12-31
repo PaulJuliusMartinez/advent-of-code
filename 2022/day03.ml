@@ -22,10 +22,10 @@ let in_groups_of_n l n =
   let rec in_groups_of_n l n groups =
     if List.is_empty l
     then groups
-    else
+    else (
       let next_group = List.take l n in
       let rest = List.drop l n in
-      in_groups_of_n rest n (next_group :: groups)
+      in_groups_of_n rest n (next_group :: groups))
   in
   let grouped = in_groups_of_n l n [] in
   List.rev grouped
@@ -37,10 +37,13 @@ let badge_priority group =
   let badge_items = List.reduce_exn ~f:Hash_set.inter bag_items in
   priority (List.hd_exn (Hash_set.to_list badge_items))
   *)
-  group |> List.map ~f:String.to_list
+  group
+  |> List.map ~f:String.to_list
   |> List.map ~f:Char.Hash_set.of_list
   |> List.reduce_exn ~f:Hash_set.inter
-  |> Hash_set.to_list |> List.hd_exn |> priority
+  |> Hash_set.to_list
+  |> List.hd_exn
+  |> priority
 ;;
 
 let solve input =

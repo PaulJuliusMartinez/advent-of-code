@@ -4,8 +4,8 @@ open Util
 let break_up_by_empty_lines lines =
   let f line (grouped_nums, current_nums) =
     if String.equal line ""
-    then (current_nums :: grouped_nums, [])
-    else (grouped_nums, Int.of_string line :: current_nums)
+    then current_nums :: grouped_nums, []
+    else grouped_nums, Int.of_string line :: current_nums
   in
   let grouped, last = List.fold_right lines ~init:([], []) ~f in
   (* With fold instead of fold_right, have to reverse everything with:

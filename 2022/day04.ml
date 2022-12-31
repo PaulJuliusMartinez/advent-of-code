@@ -3,7 +3,7 @@ open Util
 
 let parse input =
   List.map input ~f:(fun s ->
-      Scanf.sscanf s "%d-%d,%d-%d" (fun a b c d -> ((a, b), (c, d))))
+    Scanf.sscanf s "%d-%d,%d-%d" (fun a b c d -> (a, b), (c, d)))
 ;;
 
 let fully_overlaps ((s1, e1), (s2, e2)) = (s1 <= s2 && e2 <= e1) || (s2 <= s1 && e1 <= e2)

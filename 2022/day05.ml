@@ -29,17 +29,19 @@ let parse input =
     |> List.transpose_exn
     |> List.map ~f:String.of_char_list
     |> List.filter ~f:(fun s ->
-           (not (String.equal (String.strip s) ""))
-           && (not (String.is_suffix s ~suffix:"[ "))
-           && not (String.is_suffix s ~suffix:"] "))
-    |> List.map ~f:String.strip |> List.map ~f:String.to_list |> List.to_array
+         (not (String.equal (String.strip s) ""))
+         && (not (String.is_suffix s ~suffix:"[ "))
+         && not (String.is_suffix s ~suffix:"] "))
+    |> List.map ~f:String.strip
+    |> List.map ~f:String.to_list
+    |> List.to_array
   in
   let instructions = List.drop lines (List.length stack_lines + 1) in
   let instructions =
     List.map instructions ~f:(fun s ->
-        Scanf.sscanf s "move %d from %d to %d" (fun a b c -> (a, b - 1, c - 1)))
+      Scanf.sscanf s "move %d from %d to %d" (fun a b c -> a, b - 1, c - 1))
   in
-  (transposed, instructions)
+  transposed, instructions
 ;;
 
 (* Unsure of runtime of OCaml list operations, so not sure if this is
@@ -63,18 +65,18 @@ let print_stacks stacks =
 let solve input =
   let stacks, instructions = parse input in
   List.iter instructions ~f:(fun (count, from, too) ->
-      (*
+    (*
       print_stacks stacks;
       print_endline
         ("move count (" ^ Int.to_string count ^ ") from " ^ Int.to_string from ^ " to "
        ^ Int.to_string too);
        *)
-      move_between ~stacks ~count ~from ~too ~rev:true);
+    move_between ~stacks ~count ~from ~too ~rev:true);
   let tops = String.of_char_list (Array.to_list (Array.map stacks ~f:List.hd_exn)) in
   print_part1_s tops;
   let stacks, instructions = parse input in
   List.iter instructions ~f:(fun (count, from, too) ->
-      move_between ~stacks ~count ~from ~too ~rev:false);
+    move_between ~stacks ~count ~from ~too ~rev:false);
   let tops = String.of_char_list (Array.to_list (Array.map stacks ~f:List.hd_exn)) in
   print_part2_s tops
 ;;

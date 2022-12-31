@@ -1,7 +1,12 @@
 open Core
 open Async
 
-type t = Xtech | Affinity | Google | Otto | Jane_street
+type t =
+  | Xtech
+  | Affinity
+  | Google
+  | Otto
+  | Jane_street
 
 module Leaderboard_id : sig
   include String_id.S
