@@ -25,6 +25,8 @@ module Grid = struct
 
   let of_puzzle_input input ~f =
     let lines = String.split_lines input in
+    let line_lengths = List.map lines ~f:String.length in
+    assert (List.length (List.dedup_and_sort line_lengths ~compare:Int.compare) = 1);
     let width = String.length (List.hd_exn lines) in
     let height = List.length lines in
     let chars = create ~dimx:width ~dimy:height '\x00' in
