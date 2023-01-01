@@ -39,6 +39,20 @@ module Grid : sig
   val minc_of_int : 'a t -> f:(x:int -> y:int -> 'a -> int) -> int
   val count : 'a t -> f:('a -> bool) -> int
   val countc : 'a t -> f:(x:int -> y:int -> 'a -> bool) -> int
+  val find : 'a t -> f:('a -> bool) -> 'a option
+  val find_exn : 'a t -> f:('a -> bool) -> 'a
+  val findc : 'a t -> f:(x:int -> y:int -> 'a -> bool) -> (int * int * 'a) option
+  val findc_exn : 'a t -> f:(x:int -> y:int -> 'a -> bool) -> int * int * 'a
+
+  (* For iterating over neighbors of a cell *)
+  val iter_neighbors : 'a t -> x:int -> y:int -> f:('a -> unit) -> unit
+
+  val iterc_neighbors
+    :  'a t
+    -> x:int
+    -> y:int
+    -> f:(nx:int -> ny:int -> 'a -> unit)
+    -> unit
 
   module Int : sig
     val sum : int t -> int

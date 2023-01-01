@@ -1,4 +1,4 @@
 (executable
   (name aoc)
-  (libraries core stdio async core_unix.command_unix cohttp cohttp-async yojson)
+  (libraries core stdio async core_unix.command_unix cohttp cohttp-async core_kernel.pairing_heap yojson)
   (preprocess (pps ppx_jane)))
