@@ -1,0 +1,135 @@
+<html>
+  <style>
+    html {
+      --background: #0f0f23;
+    }
+    body {
+      background: var(--background);
+      color: #cccccc;
+      font-family: "Source Code Pro", monospace;
+      font-size: 22pt;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    pre { margin: 0; }
+
+    .border {
+      position: relative;
+      width: 1280px;
+      height: 720px;
+      border: 10px solid white;
+    }
+
+    .star1 { color: #9999cc; }
+    .star2 { color: #ffff66; }
+    .yellow { color: #ffff66; }
+    .yellow-glow { color: #ffff66; text-shadow: 0 0 2px #ffff66, 0 0 5px #ffff66; }
+    .super-yellow-glow { color: #ffff66; text-shadow: 0 0 5px #ffff66, 0 0 15px #ffff66; }
+    .red { color: #ff0000; }
+    .red-glow { color: #ff0000; text-shadow: 0 0 8px #ff0000, 0 0 25px #ff0000; }
+    .orange { color: #ec7824; }
+    .orange-glow { color: #ec7824; text-shadow: 0 0 8px #ec7824, 0 0 25px #ec7824; }
+    .dark-red { color: #aa0000; }
+    .green { color: #00cc00; }
+    .green-glow { color: #00cc00; text-shadow: 0 0 5px #00cc00, 0 0 15px #00cc00; }
+    .dark-green { color: #009900; }
+    .gray { color: #cccccc; }
+
+    .santa-hat {
+      position: absolute;
+      font-size: 28pt;
+      top: 50px;
+      left: -20px;
+      transform: rotate(-20deg);
+      background-color: var(--background);
+      font-weight: 700;
+    }
+
+    .advent-of-code {
+      position: absolute;
+      top: 80px;
+      right: 130px;
+      font-size: 54pt;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transform: rotate(10deg);
+    }
+
+    .in-ocaml {
+      margin-top: 40px;
+    }
+
+    .ocaml {
+      position: absolute;
+      white-space: pre;
+      font-size: 28pt;
+      top: 310px;
+      right: 50px;
+      transform: rotate(-12deg);
+    }
+
+    .scores {
+      position: absolute;
+      bottom: 30px;
+      right: 80px;
+      font-size: 60pt;
+      font-weight: 500;
+      text-align: right;
+    }
+
+    .scores .leaderboard {
+      font-size: 44pt;
+    }
+
+    .scores .unofficial {
+      font-size: 44pt;
+      color: #cccccc;
+      opacity: 0.6;
+    }
+
+    .not-leaderboard {
+      display: none;
+    }
+
+    img {
+      position: absolute;
+      left: 0px;
+      bottom: 0px;
+      width: 600px;
+      height: auto;
+      z-index: -1;
+    }
+  </style>
+  <body>
+    <div class="border">
+      <div class="santa-hat">
+        <pre class="red-glow">         .---_</pre>
+        <pre><span class="red-glow">        / </span><span class="dark-red">/</span><span class="red-glow"> /\|</span></pre>
+        <pre><span class="red-glow">      / </span><span class="dark-red">/ | </span><span class="red-glow">\</span></span><span class="super-yellow-glow"> *</span></pre>
+        <pre><span class="red-glow">     /  </span><span class="dark-red">/  \ </span><span class="red-glow">\</span></pre>
+        <pre><span class="red-glow">    /</span><span class="dark-red"> /  / \  </span><span class="red-glow">\</span></pre>
+        <pre class="gray">  ./~~~~~~~~~~~\.</pre>
+        <pre class="gray"> ( .",^. -". '.~ )</pre>
+        <pre class="gray">  '~~~~~~~~~~~~~'</pre>
+      </div>
+      <div class="advent-of-code">
+        <div class="orange-glow">Advent of Code 2022</div>
+        <div class="day-n orange-glow">Day 6</div>
+        <div class="orange-glow ">Tuning Trouble</div>
+        <div class="in-ocaml orange-glow"><pre>In OCaml! </pre></div>
+      </div>
+      <div class="ocaml orange-glow">  /\/\.db
+ |    /
+ /\‾/\
+|_ |_ |_</div>
+      <div class="scores">
+        <pre class="star1">Part 1: 19:04</pre>
+        <pre class="star2">Part 2: 32:11</pre>
+      </div>
+      <img src="./img/reaction-laugh.png"/>
+    </div>
+  </body>
+</html>
