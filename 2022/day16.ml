@@ -7,9 +7,8 @@ module Valve = struct
     ; mutable flow : int
     ; mutable neighbors : t list
     }
+  [@@deriving fields]
 
-  let name t = t.name
-  let flow t = t.flow
   let create name = { name; flow = 0; neighbors = [] }
 
   let parse input =
@@ -71,231 +70,150 @@ module Valve = struct
   ;;
 end
 
-module Volcano_escape = struct
-  module Action = struct
+module Cache = struct
+  module Best_result = struct
     type t =
-      | Moving_to of int * Valve.t
-      | Opening of Valve.t
+      { opened_last_at : int
+      ; last_at : string
+      ; total_released : int
+      }
 
-    let to_string = function
-      | Moving_to (t, v) -> sprintf "Moving to %s; arrive in %d" (Valve.name v) t
-      | Opening v -> sprintf "Opening %s" (Valve.name v)
-    ;;
-
-    let valve = function
-      | Moving_to (_, v) -> v
-      | Opening v -> v
-    ;;
-
-    let time = function
-      | Moving_to (t, _) -> t
-      | Opening _ -> 0
-    ;;
-
-    let decrement t mins =
-      if mins = 0
-      then t
-      else (
-        match t with
-        | Moving_to (time, v) -> Moving_to (time - mins, v)
-        | Opening _ -> t)
-    ;;
-
-    let _equal t1 t2 =
-      match t1, t2 with
-      | Moving_to (t1, v1), Moving_to (t2, v2) ->
-        t1 = t2 && String.equal (Valve.name v1) (Valve.name v2)
-      | Opening v1, Opening v2 -> String.equal (Valve.name v1) (Valve.name v2)
-      | _ -> false
+    let _to_string t =
+      sprintf "opened %s at %d, %d released" t.last_at t.opened_last_at t.total_released
     ;;
   end
 
   type t =
-    { curr_flow : int
-    ; pressure_released : int
-    ; minute : int
-    ; valves_released : String.Set.t
-    ; curr_action : Action.t
-    ; ele_action : Action.t
-    ; max_time : int
+    { time : int
+    ; flows : (string, int) Hashtbl.t
+    ; shortest_paths : (string, (string, int) Hashtbl.t) Hashtbl.t
+    ; best_result_including_and_ending_at : (string, Best_result.t) Hashtbl.t
     }
 
-  let init ~start ~max_time ~with_elephant =
-    { curr_flow = 0
-    ; pressure_released = 0
-    ; minute = 1
-    ; valves_released = String.Set.of_list [ Valve.name start ]
-    ; curr_action = Action.Moving_to (0, start)
-    ; ele_action = Action.Moving_to ((if with_elephant then 0 else max_time + 10), start)
-    ; max_time
+  let create time flows shortest_paths =
+    { time
+    ; flows
+    ; shortest_paths
+    ; best_result_including_and_ending_at = Hashtbl.create (module String)
     }
   ;;
 
-  let _print_state
-    { curr_flow; pressure_released; minute; valves_released; curr_action; ele_action; _ }
-    =
-    printf "  pressure released: %d\n" pressure_released;
-    printf "  current flow: %d\n" curr_flow;
-    printf "  minute: %d\n" minute;
-    printf
-      "  valves visited: %s\n"
-      (String.concat ~sep:", " (Set.to_list valves_released));
-    printf "  curr action: %s\n" (Action.to_string curr_action);
-    printf "  ele action: %s\n" (Action.to_string ele_action)
+  let cache_key valves ending_at = String.concat ~sep:" " (ending_at :: "<-" :: valves)
+
+  let all_but_one vals =
+    List.mapi vals ~f:(fun i one ->
+      let others =
+        List.filter_mapi vals ~f:(fun j other -> if i = j then None else Some other)
+      in
+      others, one)
   ;;
 
-  let next_states t valve_distances =
-    let { curr_flow
-        ; pressure_released
-        ; minute
-        ; valves_released
-        ; curr_action
-        ; ele_action
-        ; max_time
-        }
-      =
-      t
-    in
-    (* printf "-----------------------------------------\n"; *)
-    (* printf "Current state:\n"; *)
-    (* print_state t; *)
-    if minute > max_time
-    then []
-    else (
-      let flow_increase = ref 0 in
-      let complete_action = function
-        | Action.Opening v -> flow_increase := !flow_increase + Valve.flow v
-        | _ -> ()
-      in
-      complete_action curr_action;
-      complete_action ele_action;
-      let curr_flow = curr_flow + !flow_increase in
-      let pressure_released = pressure_released + curr_flow in
-      let valves_released = ref valves_released in
-      let next_actions action =
-        let curr_valve = Action.valve action in
-        let move_to_new_valve () =
-          let best_distances = Hashtbl.find_exn valve_distances (Valve.name curr_valve) in
-          List.filter_map best_distances ~f:(fun (distance, v) ->
-            if String.equal (Valve.name v) (Valve.name curr_valve)
-            then None
-            else if Set.mem !valves_released (Valve.name v)
-            then None
-            else if minute + distance > max_time
-            then None
-            else Some (Action.Moving_to (distance - 1, v)))
+  let time_to t start end_ =
+    Hashtbl.find_exn (Hashtbl.find_exn t.shortest_paths start) end_
+  ;;
+
+  let best_result_starting_at t valve =
+    let time_to_open = time_to t "AA" valve + 1 in
+    let flow = Hashtbl.find_exn t.flows valve in
+    { Best_result.opened_last_at = time_to_open
+    ; last_at = valve
+    ; total_released = (t.time - time_to_open) * flow
+    }
+  ;;
+
+  let rec best_result_visiting t ~valves ~ending_at : Best_result.t =
+    let key = cache_key valves ending_at in
+    Hashtbl.find_or_add t.best_result_including_and_ending_at key ~default:(fun () ->
+      match valves with
+      | [] -> best_result_starting_at t ending_at
+      | _ ->
+        let best_result =
+          ref { Best_result.opened_last_at = 0; last_at = "AA"; total_released = 0 }
         in
-        let nexts =
-          match action with
-          | Action.Moving_to (0, v) ->
-            if Set.mem !valves_released (Valve.name v)
-            then move_to_new_valve ()
-            else (
-              valves_released := Set.add !valves_released (Valve.name v);
-              [ Action.Opening v ])
-          | Action.Moving_to (n, v) -> [ Action.Moving_to (n - 1, v) ]
-          | Action.Opening _ -> move_to_new_valve ()
-        in
-        if List.is_empty nexts then [ Action.Moving_to (max_time, curr_valve) ] else nexts
-      in
-      let next_curr_actions = next_actions curr_action in
-      let next_ele_actions = next_actions ele_action in
-      let compute_next_state next_curr_action next_ele_action =
-        let curr_valve = Valve.name (Action.valve next_curr_action) in
-        let ele_valve = Valve.name (Action.valve next_ele_action) in
-        if String.equal curr_valve ele_valve && not (String.equal curr_valve "AA")
-        then None
-        else (
-          let time_skipped =
-            list_min
-              [ Action.time next_curr_action
-              ; Action.time next_ele_action
-              ; Int.max 0 (max_time - minute - 2)
-              ]
+        let flow = Hashtbl.find_exn t.flows ending_at in
+        List.iter (all_but_one valves) ~f:(fun (prev, last_valve) ->
+          let progress_to_last =
+            best_result_visiting t ~valves:prev ~ending_at:last_valve
           in
-          let next_state =
-            { curr_flow
-            ; pressure_released = pressure_released + (curr_flow * time_skipped)
-            ; minute = minute + 1 + time_skipped
-            ; valves_released = !valves_released
-            ; curr_action = Action.decrement next_curr_action time_skipped
-            ; ele_action = Action.decrement next_ele_action time_skipped
-            ; max_time
-            }
-          in
-          (* printf "Next state (time skipped = %d):\n" time_skipped; *)
-          (* print_state next_state; *)
-          Some next_state)
-      in
-      if minute = 1
-      then
-        List.concat_mapi next_curr_actions ~f:(fun i next_curr_action ->
-          List.filter_mapi next_ele_actions ~f:(fun j next_ele_action ->
-            if j <= i then None else compute_next_state next_curr_action next_ele_action))
-      else
-        List.concat_map next_curr_actions ~f:(fun next_curr_action ->
-          List.filter_map next_ele_actions ~f:(fun next_ele_action ->
-            compute_next_state next_curr_action next_ele_action)))
+          let time_to_ending_at = time_to t progress_to_last.last_at ending_at in
+          let next_opened_at = progress_to_last.opened_last_at + time_to_ending_at + 1 in
+          if next_opened_at < t.time
+          then (
+            let total_released =
+              progress_to_last.total_released + ((t.time - next_opened_at) * flow)
+            in
+            if total_released > !best_result.total_released
+            then
+              best_result
+                := { Best_result.opened_last_at = next_opened_at
+                   ; last_at = ending_at
+                   ; total_released
+                   })
+          else if progress_to_last.total_released > !best_result.total_released
+          then best_result := progress_to_last);
+        !best_result)
+  ;;
+
+  (* all_but_one [1; 2; 3; 4]
+     ->
+       [ [1; 2; 3], 4
+       ; [1; 2; 4], 3
+       ; [1; 3; 4], 2
+       ; [2; 3; 4], 1
+       ]
+       *)
+  let most_pressure_released_for t valves =
+    (* Could end at any valve; so we'll check ending at each valve and
+       take max. *)
+    List.map (all_but_one valves) ~f:(fun (others, ending_at) ->
+      (best_result_visiting t ~valves:others ~ending_at).total_released)
+    |> list_max
   ;;
 end
 
+let disjoint_sets vals =
+  if List.is_empty vals
+  then []
+  else (
+    let rec disjoint_sets rest s1 s2 =
+      match rest with
+      | [] -> [ s1, s2 ]
+      | hd :: tl ->
+        let in1 = disjoint_sets tl (hd :: s1) s2 in
+        let in2 = disjoint_sets tl s1 (hd :: s2) in
+        List.concat [ in1; in2 ]
+    in
+    disjoint_sets (List.tl_exn vals) [ List.hd_exn vals ] [])
+;;
+
 let solve input =
+  print_endline "";
   let valves = Valve.parse input in
   let shortest_paths = Hashtbl.create (module String) in
   Hashtbl.iter valves ~f:(fun v ->
-    ignore (Hashtbl.add shortest_paths ~key:v.name ~data:(Valve.shortest_paths valves v)));
+    Hashtbl.add_exn shortest_paths ~key:v.name ~data:(Valve.shortest_paths valves v));
   let interesting_valves =
-    Hashtbl.to_alist valves |> List.map ~f:snd |> List.filter ~f:(fun v -> v.flow > 0)
+    Hashtbl.to_alist valves
+    |> List.map ~f:snd
+    |> List.filter ~f:(fun v -> v.flow > 0)
+    |> List.sort ~compare:(fun v1 v2 -> String.compare v1.name v2.name)
   in
-  let interesting_names =
-    String.Set.of_list ("AA" :: List.map interesting_valves ~f:(fun v -> v.name))
+  let flows = Hashtbl.create (module String) in
+  List.iter interesting_valves ~f:(fun v ->
+    Hashtbl.add_exn flows ~key:v.name ~data:v.flow);
+  let cache = Cache.create 30 flows shortest_paths in
+  let interesting_valves =
+    List.map interesting_valves ~f:Valve.name |> List.sort ~compare:String.compare
   in
-  List.iter interesting_valves ~f:(fun v -> printf "Valve %s has flow %d\n" v.name v.flow);
-  let best_neighbors = Hashtbl.create (module String) in
-  Set.iter interesting_names ~f:(fun v ->
-    let v = Hashtbl.find_exn valves v in
-    let paths_from_v = Hashtbl.find_exn shortest_paths v.name in
-    let sorted_neighbors =
-      List.map interesting_valves ~f:(fun v ->
-        let cost_to_v = Hashtbl.find_exn paths_from_v v.name in
-        let flow_from_v = v.flow in
-        cost_to_v, flow_from_v, v)
-      |> List.sort ~compare:(fun (c1, f1, _) (c2, f2, _) ->
-           let res = Int.compare c1 c2 in
-           if res <> 0 then res else Int.compare f2 f1)
-      |> List.map ~f:(fun (c, _, v) -> c, v)
-    in
-    Hashtbl.add_exn best_neighbors ~key:v.name ~data:sorted_neighbors);
-  Hashtbl.iteri best_neighbors ~f:(fun ~key:start ~data:neighbors ->
-    printf "------\n";
-    List.iter neighbors ~f:(fun (c, n) ->
-      printf "From %s to %s takes %d (flow %d)\n" start n.name c n.flow));
-  let solve ~with_elephant ~max_time =
-    let most_pressure = ref 0 in
-    let states = Queue.create () in
-    let start = Hashtbl.find_exn valves "AA" in
-    let initial_state = Volcano_escape.init ~start ~max_time ~with_elephant in
-    Queue.enqueue states initial_state;
-    while not (Queue.is_empty states) do
-      let state = Queue.dequeue_exn states in
-      if state.pressure_released > !most_pressure
-      then (
-        most_pressure := state.pressure_released;
-        printf "Minute %d: pressure released = %d\n" state.minute !most_pressure;
-        Out_channel.flush Out_channel.stdout);
-      let next_states = Volcano_escape.next_states state best_neighbors in
-      Queue.enqueue_all states next_states
-    done;
-    !most_pressure
-  in
-  print_part1 (solve ~with_elephant:false ~max_time:30);
-  print_part2 (solve ~with_elephant:true ~max_time:26)
+  print_part1 (Cache.most_pressure_released_for cache interesting_valves);
+  let max_pressure = ref 0 in
+  let cache = Cache.create 26 flows shortest_paths in
+  let all_disjoint_sets = List.tl_exn (disjoint_sets interesting_valves) in
+  List.iter all_disjoint_sets ~f:(fun (s1, s2) ->
+    let p1 = Cache.most_pressure_released_for cache s1 in
+    let p2 = Cache.most_pressure_released_for cache s2 in
+    let total_pressure_released = p1 + p2 in
+    if total_pressure_released > !max_pressure
+    then max_pressure := total_pressure_released);
+  print_part2 !max_pressure
 ;;
-
-(* Too low: 2035 *)
-(* No: 2052 *)
-(* No: 2064 *)
-(* No: 2085 *)
-(* No: 2174 *)
-(* No: 2248 *)
-(* No: 2264 *)
