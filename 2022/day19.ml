@@ -67,6 +67,26 @@ module Blueprint = struct
   ;;
 end
 
+module Robot_state = struct
+  type t =
+    { ore_robots : int
+    ; clay_robots : int
+    ; obsidian_robots : int
+    ; geode_robots : int
+    }
+  [@@deriving sexp, compare, hash]
+end
+
+module Resources = struct
+  type t = int * int * int * int [@@deriving sexp, compare, hash]
+
+  let create ~ore ~clay ~obsidian ~geodes = ore, clay, obsidian, geodes
+
+  let strictly_less (r1a, r1b, r1c, r1d) (r2a, r2b, r2c, r2d) =
+    r1a <= r2a && r1b <= r2b && r1c <= r2c && r1d <= r2d
+  ;;
+end
+
 module Factory = struct
   type t =
     { blueprint : Blueprint.t
@@ -107,6 +127,18 @@ module Factory = struct
     ; waiting_to_build = [ Robot.Ore; Robot.Clay ]
     ; last_built = None
     }
+  ;;
+
+  let robot_state t =
+    { Robot_state.ore_robots = t.ore_robots
+    ; clay_robots = t.clay_robots
+    ; obsidian_robots = t.obsidian_robots
+    ; geode_robots = t.geode_robots
+    }
+  ;;
+
+  let resources t =
+    Resources.create ~ore:t.ore ~clay:t.clay ~obsidian:t.obsidian ~geodes:t.geodes
   ;;
 
   let copy t = { t with blueprint = t.blueprint }
@@ -221,9 +253,35 @@ module Factory = struct
 
   let run_for_n_minutes t =
     let factories = ref [ t ] in
-    for m = 1 to t.max_minutes do
+    for _m = 1 to t.max_minutes do
       factories := List.concat_map !factories ~f:advance;
-      printf "There are %d factories after %d minutes\n" (List.length !factories) m
+      (* We can get end up with multiple factories that have the same
+         number of robots, but one factory has strictly more of every
+         resource than the other. In these cases, we shouldn't continue
+         running the factory with fewer resources. This seems like a lot
+         of work to do, but it doesn't drastically reduce the branching
+         factor and the total number of factories at each minute. *)
+      let lists_by_robot_states = Hashtbl.create (module Robot_state) in
+      List.iter !factories ~f:(fun f ->
+        Hashtbl.change lists_by_robot_states (robot_state f) ~f:(function
+          | None -> Some [ f ]
+          | Some l -> Some (f :: l)));
+      let new_factories = ref [] in
+      Hashtbl.iteri lists_by_robot_states ~f:(fun ~key:_ ~data:fs ->
+        let sorted =
+          List.map fs ~f:(fun f -> f, resources f)
+          |> List.sort ~compare:(fun (_, r1) (_, r2) -> Resources.compare r2 r1)
+        in
+        let best_fs, _ =
+          List.fold sorted ~init:([], []) ~f:(fun (best_states, best_resources) (f, r) ->
+            if List.exists best_resources ~f:(fun br -> Resources.strictly_less r br)
+            then best_states, best_resources
+            else f :: best_states, r :: best_resources)
+        in
+        new_factories := best_fs :: !new_factories);
+      factories := List.concat !new_factories
+      (* printf "There are %d factories after %d minutes\n" (List.length
+         !factories) m *)
     done;
     list_max (List.map !factories ~f:(fun f -> f.geodes))
   ;;
@@ -235,7 +293,6 @@ let solve input =
     List.map blueprints ~f:(fun blueprint ->
       let factory = Factory.create blueprint 24 in
       let max_geodes = Factory.run_for_n_minutes factory in
-      printf "Max geodes was %d\n" max_geodes;
       blueprint.id * max_geodes)
   in
   print_part1 (list_sum quality_levels);
@@ -243,10 +300,8 @@ let solve input =
     List.map (List.take blueprints 3) ~f:(fun blueprint ->
       let factory = Factory.create blueprint 32 in
       let max_geodes = Factory.run_for_n_minutes factory in
-      printf "Max geodes was %d\n" max_geodes;
       max_geodes)
   in
-  (* Takes about 5-10 minutes *)
   print_part2 (list_product num_geodes)
 ;;
 

@@ -14,7 +14,7 @@ let solve =
            (ignore (failwith "Invalid day; must be in\nrange 1-25: " ^ Int.to_string day))
        else (
          let%map input = Problem_input.fetch_input ~year:2022 ~day in
-         printf "\nSolving Day %d\n" day;
+         Core.printf "\nSolving Day %d\n" day;
          match day with
          | 1 -> Day01.solve input
          | 2 -> Day02.solve input
