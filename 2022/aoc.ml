@@ -14,6 +14,7 @@ let solve =
            (ignore (failwith "Invalid day; must be in\nrange 1-25: " ^ Int.to_string day))
        else (
          let%map input = Problem_input.fetch_input ~year:2022 ~day in
+         printf "\nSolving Day %d\n" day;
          match day with
          | 1 -> Day01.solve input
          | 2 -> Day02.solve input
@@ -33,6 +34,7 @@ let solve =
          | 16 -> Day16.solve input
          | 17 -> Day17.solve input
          | 18 -> Day18.solve input
+         | 19 -> Day19.solve input
          | _ -> failwith ("No solution implemented for Day " ^ Int.to_string day)))
 ;;
 
