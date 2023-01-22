@@ -77,15 +77,6 @@ module Monkey = struct
     | Divide _ -> `Divide
   ;;
 
-  let op_ch = function
-    | Human | Num _ -> failwith "Don't call to_eq on Num/Human monkey"
-    | Eq _ -> "="
-    | Plus _ -> "+"
-    | Minus _ -> "-"
-    | Times _ -> "*"
-    | Divide _ -> "/"
-  ;;
-
   let solve_human t_map values =
     let rec solve t_name dest_value =
       let t = Hashtbl.find_exn t_map t_name in
@@ -97,31 +88,19 @@ module Monkey = struct
         let op = op t in
         let m1v = Hashtbl.find values m1 in
         let m2v = Hashtbl.find values m2 in
-        printf "Need %s = %s %s %s to be %d\n" t_name m1 (op_ch t) m2 dest_value;
-        print_s [%sexp (m1v : int option)];
-        print_s [%sexp (m2v : int option)];
-        let solved =
-          match m1v, m2v, op with
-          | None, None, `Eq ->
-            ignore (solve m1 0);
-            solve m2 0
-          | None, None, _ ->
-            need_to_solve t_name t_map values "";
-            failwith "Can't solve both sides"
-          | Some _, Some _, _ -> failwith "Already have both sides"
-          | Some a, None, `Eq -> solve m2 a
-          | None, Some b, `Eq -> solve m1 b
-          | Some a, None, `Plus -> solve m2 (dest_value - a)
-          | None, Some b, `Plus -> solve m1 (dest_value - b)
-          | Some a, None, `Minus -> solve m2 (a - dest_value)
-          | None, Some b, `Minus -> solve m1 (b + dest_value)
-          | Some a, None, `Times -> solve m2 (dest_value / a)
-          | None, Some b, `Times -> solve m1 (dest_value / b)
-          | Some a, None, `Divide -> solve m2 (a / dest_value)
-          | None, Some b, `Divide -> solve m1 (b * dest_value)
-        in
-        printf "%s should be %d\n" t_name solved;
-        solved
+        (match m1v, m2v, op with
+         | None, None, _ -> failwith "Can't solve both sides"
+         | Some _, Some _, _ -> failwith "Already have solved both sides"
+         | Some a, None, `Eq -> solve m2 a
+         | None, Some b, `Eq -> solve m1 b
+         | Some a, None, `Plus -> solve m2 (dest_value - a)
+         | None, Some b, `Plus -> solve m1 (dest_value - b)
+         | Some a, None, `Minus -> solve m2 (a - dest_value)
+         | None, Some b, `Minus -> solve m1 (b + dest_value)
+         | Some a, None, `Times -> solve m2 (dest_value / a)
+         | None, Some b, `Times -> solve m1 (dest_value / b)
+         | Some a, None, `Divide -> solve m2 (a / dest_value)
+         | None, Some b, `Divide -> solve m1 (b * dest_value))
     in
     solve "root" 0
   ;;
@@ -139,10 +118,10 @@ let solve input =
         | None -> ()
         | Some v -> Hashtbl.add_exn monkey_values ~key:name ~data:v))
   done;
+  print_part2 (Hashtbl.find_exn monkey_values "root");
   (* Part 2 *)
   let name_to_monkeys = Hashtbl.of_alist_exn (module String) names_and_monkeys in
   Hashtbl.set name_to_monkeys ~key:"humn" ~data:Monkey.Human;
-  print_s [%sexp (name_to_monkeys : (string, Monkey.t) Hashtbl.t)];
   Hashtbl.set
     name_to_monkeys
     ~key:"root"
@@ -156,10 +135,7 @@ let solve input =
       then (
         match Monkey.eval monkey monkey_values with
         | None -> ()
-        | Some v ->
-          printf "Evaluated %s to be %d; " name v;
-          print_s [%sexp (monkey : Monkey.t)];
-          Hashtbl.add_exn monkey_values ~key:name ~data:v))
+        | Some v -> Hashtbl.add_exn monkey_values ~key:name ~data:v))
   done;
   print_part2 (Monkey.solve_human name_to_monkeys monkey_values)
 ;;
