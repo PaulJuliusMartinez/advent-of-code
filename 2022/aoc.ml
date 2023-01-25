@@ -39,6 +39,7 @@ let solve =
          | 21 -> Day21.solve input
          | 22 -> Day22.solve input
          | 23 -> Day23.solve input
+         | 24 -> Day24.solve input
          | _ -> failwith ("No solution implemented for Day " ^ Int.to_string day)))
 ;;
 
